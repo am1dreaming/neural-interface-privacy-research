@@ -1,0 +1,38 @@
+# Smoke run on SYNTHETIC data: checks the pipeline, not the science.
+seed: 0
+
+data:
+  source: synthetic
+  n_subjects: 12
+  n_sentences: 64
+  trials_per_sentence: 2
+  n_channels: 16
+  n_times: 128
+  text_dim: 16
+  snr: 1.0
+  subject_variability: 0.3
+
+split:
+  val_frac: 0.15
+  test_frac: 0.25
+
+model:
+  d_model: 64
+  out_dim: 32
+  n_layers: 2
+  n_heads: 4
+  patch: 16
+
+train:
+  epochs: 40
+  lr: 0.001
+  batch_size: 64
+  temperature: 0.1
+
+personalization:
+  rank: 4
+  epochs: 40
+  lr: 0.01
+  calibration_sentences: [0, 2, 4, 8]
+
+output_dir: results

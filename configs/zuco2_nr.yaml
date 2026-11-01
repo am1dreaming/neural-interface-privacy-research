@@ -1,0 +1,39 @@
+# ZuCo 2.0, normal reading (task 1 NR). REAL data.
+# Run from the repository root. Data: see data/README.md.
+seed: 0
+
+data:
+  source: zuco2_nr
+  root: data/raw/zuco
+  cache_dir: data/processed/zuco2_nr
+  decimate_factor: 5          # 500 Hz -> 100 Hz
+  n_times: 640                # 6.4 s window (longer: start is cut, shorter: zero-padded at the end)
+  min_seconds_per_word: 0.05  # drops broken recordings: threshold sits in the gap between two clusters (see neurotext/data/zuco.py)
+  text_dim: 64                # TF-IDF + SVD, a simple stand-in for a real sentence encoder
+
+split:
+  val_frac: 0.15
+  test_frac: 0.25
+  block_size: 30              # sentences follow topics and the signal drifts slowly: a random split leaks hints
+                              # through neighbours (see README). Test sentences are taken in contiguous blocks.
+
+model:
+  d_model: 64
+  out_dim: 32
+  n_layers: 2
+  n_heads: 4
+  patch: 16
+
+train:
+  epochs: 30
+  lr: 0.001
+  batch_size: 64
+  temperature: 0.1
+
+personalization:
+  rank: 4
+  epochs: 40
+  lr: 0.001                   # gentle training: a higher lr hurt on synthetic data
+  calibration_sentences: [0, 10, 20, 40]
+
+output_dir: results

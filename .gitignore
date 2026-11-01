@@ -1,0 +1,33 @@
+# data and artifacts are not stored in git
+data/raw/
+data/processed/
+data/cache/
+*.fif
+*.edf
+*.set
+*.mat
+*.npy
+*.npz
+*.pt
+*.ckpt
+runs/
+wandb/
+
+# python
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# os / ide
+.DS_Store
+.idea/
+.vscode/
+
+# raw JSON outputs of runs are not committed (the summary figure is)
+results/*.json
+
+# dataset archives
+*.zip
+*.part

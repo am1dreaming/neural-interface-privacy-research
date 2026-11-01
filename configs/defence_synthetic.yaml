@@ -1,0 +1,40 @@
+# Defences against identity leakage and their cost in decoding quality. SYNTHETIC data: the decoder
+# works there, whereas on real ZuCo data accuracy would be measured from zero. This measures the method,
+# it is not a statement about real EEG.
+seed: 0
+
+data:
+  source: synthetic
+  n_subjects: 24
+  n_sentences: 120
+  trials_per_sentence: 1
+  n_channels: 16
+  n_times: 128
+  text_dim: 16
+  snr: 1.5
+  subject_variability: 1.0
+
+split:
+  val_frac: 0.15
+  test_frac: 0.25
+
+model:
+  d_model: 64
+  out_dim: 32
+  n_layers: 2
+  n_heads: 4
+  patch: 16
+
+train:
+  epochs: 40
+  lr: 0.001
+  batch_size: 64
+  temperature: 0.1
+
+defence:
+  noise: [0.25, 0.5, 1.0, 2.0]
+  pca: [2, 4, 8, 16]
+  identity_null: [2, 4, 8, 16]
+  adversarial: [0.5, 2.0, 8.0]
+
+output_dir: results
