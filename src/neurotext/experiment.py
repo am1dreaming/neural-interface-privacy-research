@@ -14,6 +14,7 @@ import torch
 
 from .data import (
     check_no_leakage,
+    load_eegmmidb,
     load_zuco2_nr,
     make_synthetic,
     select_calibration,
@@ -49,6 +50,12 @@ def load_data(cfg: dict):
         key = json.dumps({"source": source, **kwargs}, sort_keys=True, default=str)
         if key not in _REAL_DATA:
             _REAL_DATA[key] = load_zuco2_nr(**kwargs, progress=print)
+        return _REAL_DATA[key]
+    if source == "eegmmidb":
+        kwargs.pop("seed", None)
+        key = json.dumps({"source": source, **kwargs}, sort_keys=True, default=str)
+        if key not in _REAL_DATA:
+            _REAL_DATA[key] = load_eegmmidb(**kwargs, progress=print)
         return _REAL_DATA[key]
     raise NotImplementedError(f"data source {source!r} has no loader yet; see data/README.md")
 

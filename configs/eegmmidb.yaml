@@ -1,0 +1,42 @@
+# EEGMMIDB (PhysioNet motor movement/imagery), 109 people, DEVELOPMENT config: the 24 pre-registered held-out
+# people are excluded by the loader. REAL data, leakage side only (no text, so no decoding).
+# Run from the repository root. Data: see data/README.md.
+seed: 0
+
+data:
+  source: eegmmidb
+  root: data/raw/eegmmidb
+  cache_dir: data/processed/eegmmidb
+  holdout: exclude            # NEVER change here; the final run uses configs/eegmmidb_final.yaml
+  decimate_factor: 2          # 160 Hz -> 80 Hz
+  window_seconds: 4.0         # 320 samples
+  max_windows_per_run: 6
+  skip_seconds: 1.0
+  min_runs: 12                # a person needs at least 12 usable runs of 14
+
+split:
+  val_frac: 0.15
+  test_frac: 0.25             # of the 14 runs: 4 test, 2 val, 8 train (the split is by RUN, never by window)
+  block_size: null
+
+model:
+  name: transformer
+  d_model: 64
+  out_dim: 32
+  n_layers: 2
+  n_heads: 4
+  patch: 16                   # 320 / 16 = 20 patches
+
+train:
+  epochs: 30
+  lr: 0.001
+  batch_size: 64
+  temperature: 0.1
+
+defence:
+  noise: [0.5, 1.0]
+  pca: [4, 8]
+  identity_null: [8, 32]
+  adversarial: [1.0]
+
+output_dir: results

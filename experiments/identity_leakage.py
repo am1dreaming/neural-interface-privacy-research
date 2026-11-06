@@ -47,6 +47,8 @@ def main() -> None:
     parser.add_argument("--seeds", type=int, default=10)
     parser.add_argument("--epochs", type=int, default=None, help="override train.epochs (faster, for a quick look)")
     parser.add_argument("--probes", nargs="+", default=list(PROBES), choices=list(PROBES))
+    parser.add_argument("--verify", action="store_true",
+                        help="also score open-set verification (same person or not): EER and AUC, cosine and LDA")
     args = parser.parse_args()
     if args.seeds < 3:
         parser.error("use at least 3 seeds")
@@ -74,7 +76,7 @@ def main() -> None:
 
     runs = []
     for seed in range(args.seeds):
-        r = run_identity_seed(both, band_x, cfg, seed, tuple(args.probes))
+        r = run_identity_seed(both, band_x, cfg, seed, tuple(args.probes), verify=args.verify)
         runs.append(r)
         t = r["identity"]["new_users"]["trained encoder"]["linear"]
         u = r["identity"]["new_users"]["untrained encoder"]["linear"]
@@ -106,6 +108,20 @@ def main() -> None:
             diff = paired_diff_ci([x for x, _ in pairs], [y for _, y in pairs])
             summary["populations"][pop].setdefault("trained_minus_untrained", {})[p] = {**diff, "verdict": verdict(diff)}
             print(f"     {p:7s} {diff['mean']:+.3f} [{diff['ci_low']:+.3f}, {diff['ci_high']:+.3f}] -> {verdict(diff)}")
+
+    if args.verify:
+        summary["verify"] = {}
+        print("\n== open-set verification, NEW USERS: EER and AUC, mean [95% CI] over seeds (0.5 = chance for both) ==")
+        print(f"   {'representation':34s}{'cosine EER':>26s}{'LDA EER':>26s}{'LDA AUC':>26s}")
+        for rep in reps:
+            row = {}
+            for sc in ("cosine", "lda"):
+                cells = [(r["identity"]["new_users"][rep].get("verify") or {}).get(sc) for r in runs]
+                row[sc] = {k: mean_ci([c[k] for c in cells if c]) for k in ("eer", "auc")} if any(cells) else None
+            summary["verify"][rep] = row
+            f = lambda c: "n/a" if not c else f"{c['mean']:.3f} [{c['ci_low']:.3f}, {c['ci_high']:.3f}]"
+            print(f"   {rep:34s}{f(row['cosine'] and row['cosine']['eer']):>26s}{f(row['lda'] and row['lda']['eer']):>26s}"
+                  f"{f(row['lda'] and row['lda']['auc']):>26s}")
 
     out = Path(cfg.get("output_dir", "results"))
     out.mkdir(parents=True, exist_ok=True)

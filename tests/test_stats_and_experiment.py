@@ -69,3 +69,19 @@ def test_run_once_end_to_end_on_a_tiny_config():
     assert r["n_candidates"] == 4
     # same seed -> same result (reproducibility is a project requirement)
     assert run_once(cfg, seed=0, include_efficiency=False)["zero_shot"] == r["zero_shot"]
+
+
+def test_holm_matches_a_hand_computation_and_keeps_nan():
+    from neurotext.stats import holm
+
+    adj = holm({"a": 0.01, "b": 0.04, "c": 0.03, "d": float("nan")})
+    assert adj["a"] == pytest.approx(0.03) and adj["c"] == pytest.approx(0.06) and adj["b"] == pytest.approx(0.06)
+    assert adj["d"] != adj["d"]  # NaN
+
+
+def test_one_sided_p_follows_the_direction():
+    from neurotext.stats import one_sided_p
+
+    v = [0.3, 0.25, 0.35, 0.28, 0.31]
+    assert one_sided_p(v, 0.0, "greater") < 0.01 and one_sided_p(v, 0.0, "less") > 0.99
+    assert one_sided_p([0.1, 0.1, 0.1], 0.0, "greater") == 0.0 and one_sided_p([0.0, 0.0], 0.0) == 1.0

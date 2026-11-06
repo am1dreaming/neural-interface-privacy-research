@@ -61,13 +61,13 @@ def identity_null_defence(z_fit: np.ndarray, labels_fit: np.ndarray, z: np.ndarr
     return z - (z - mu) @ v @ v.T
 
 
-def run_defence_seed(cfg: dict, seed: int, probes: tuple[str, ...] = PROBES) -> dict:
+def run_defence_seed(cfg: dict, seed: int, probes: tuple[str, ...] = PROBES, verify: bool = False) -> dict:
     """One seed: train the plain encoder (and the adversarial ones), release the embeddings under every
     defence, and measure utility and identity leakage for the new users. Needs PyTorch."""
     import torch
 
     from .experiment import load_data
-    from .models import EEGEncoder, TextProjector
+    from .models import TextProjector, build_encoder, model_options
     from .training import embed, fit_alignment, fit_alignment_adversarial, project_text
 
     data = load_data({**cfg["data"], "seed": seed})
@@ -75,12 +75,13 @@ def run_defence_seed(cfg: dict, seed: int, probes: tuple[str, ...] = PROBES) -> 
     check_no_leakage(split, data.subject_ids, data.sentence_ids)
     block = cfg["split"].get("block_size") or 1
     m = cfg["model"]
+    enc_name, enc_opts = model_options(m)
     d = cfg.get("defence", {})
     n_ch, n_t = data.x.shape[1], data.x.shape[2]
 
     def build():
         torch.manual_seed(seed)  # every encoder starts from the same weights
-        return EEGEncoder(n_ch, n_t, **m), TextProjector(data.text_emb.shape[1], m["out_dim"])
+        return build_encoder(enc_name, n_ch, n_t, **enc_opts), TextProjector(data.text_emb.shape[1], m["out_dim"])
 
     encoder, projector = build()
     fit_alignment(encoder, projector, data.x[split.train], data.sentence_ids[split.train], data.text_emb,
@@ -114,7 +115,7 @@ def run_defence_seed(cfg: dict, seed: int, probes: tuple[str, ...] = PROBES) -> 
 
     new_mask = np.isin(data.subject_ids, split.groups["test_subjects"])
     leak = evaluate_identity({n: z for n, (z, _) in released.items()}, data.subject_ids, data.sentence_ids,
-                             new_mask, block, probes, seed, populations=("new_users",))["new_users"]
+                             new_mask, block, probes, seed, populations=("new_users",), verify=verify)["new_users"]
     return {
         "seed": seed,
         "n_new_users": int(len(split.groups["test_subjects"])),

@@ -8,6 +8,7 @@ from .splits import (
     subject_and_sentence_split,
     subject_split,
 )
+from .eegmmidb import HOLDOUT, holdout_ids, load_eegmmidb, read_edf
 from .synthetic import SyntheticData, make_synthetic
 from .text_features import tfidf_svd_embeddings
 from .zuco import load_zuco2_nr, read_subject_file, screen_recording
@@ -26,6 +27,10 @@ __all__ = [
     "make_synthetic",
     "tfidf_svd_embeddings",
     "load_zuco2_nr",
+    "load_eegmmidb",
+    "read_edf",
+    "HOLDOUT",
+    "holdout_ids",
     "read_subject_file",
     "screen_recording",
     "BANDS",

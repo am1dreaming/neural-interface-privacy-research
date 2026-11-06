@@ -48,6 +48,7 @@ def main() -> None:
     parser.add_argument("--config", required=True)
     parser.add_argument("--seeds", type=int, default=10)
     parser.add_argument("--probes", nargs="+", default=list(PROBES), choices=list(PROBES))
+    parser.add_argument("--verify", action="store_true", help="also score open-set verification (EER / AUC)")
     args = parser.parse_args()
     if args.seeds < 3:
         parser.error("use at least 3 seeds")
@@ -58,7 +59,7 @@ def main() -> None:
 
     runs = []
     for seed in range(args.seeds):
-        runs.append(run_defence_seed(cfg, seed, tuple(args.probes)))
+        runs.append(run_defence_seed(cfg, seed, tuple(args.probes), verify=args.verify))
         none = runs[-1]["defences"]["none"]
         print(f"seed {seed:2d} done | no defence: top-1 {none['utility']['top1']:.3f}"
               + "".join(f" | {p} id-acc {none['identity'][p]['accuracy']:.3f}" for p in args.probes if none["identity"][p]),
@@ -73,6 +74,8 @@ def main() -> None:
     summary = {"n_seeds": len(runs), "chance_top1": chance_top1, "chance_identity": chance_id, "defences": {}}
     print(f"\n== mean [95% CI] over {len(runs)} seeds; chance: top-1 {chance_top1:.3f}, identity {chance_id:.3f} ==")
     header = f"{'defence':20s} {'top-1 (new users)':>22s}" + "".join(f"{'id-acc ' + p:>24s}" for p in args.probes)
+    if args.verify:
+        header += f"{'LDA EER (0.5=chance)':>24s}"
     print(header)
     for n in names:
         row = {"top1": mean_ci([get_top1(r, n) for r in runs])}
@@ -80,6 +83,11 @@ def main() -> None:
         for p in args.probes:
             row[p] = mean_ci([get_id(r, n, p) for r in runs])
             line += f"{fmt(row[p]):>24s}"
+        if args.verify:
+            for scorer in ("cosine", "lda"):
+                vals = [((r["defences"][n]["identity"].get("verify") or {}).get(scorer) or {}).get("eer", np.nan) for r in runs]
+                row[f"eer_{scorer}"] = mean_ci([v for v in vals if not np.isnan(v)]) if not all(np.isnan(vals)) else None
+            line += f"{fmt(row['eer_lda']) if row.get('eer_lda') else 'n/a':>24s}"
         summary["defences"][n] = row
         print(line)
 

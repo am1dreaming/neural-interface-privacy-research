@@ -103,15 +103,30 @@ def subject_and_sentence_split(
     test_frac: float = 0.25,
     seed: int = 0,
     block_size: int | None = None,
+    test_subjects: np.ndarray | list | None = None,
 ) -> Split:
     """Strictest split: test = unseen people reading unseen sentences.
+
+    `test_subjects` fixes WHICH people are the test people (e.g. a pre-registered held-out group);
+    the rest are divided into train and val at random. Everything else works as without it.
 
     A sample is kept only if *both* its subject and its sentence belong to the same
     partition; mixed samples (e.g. a train subject reading a test sentence) are dropped,
     because they would leak one of the two factors.
     """
     rng = np.random.default_rng(seed)
-    s_tr, s_va, s_te = _partition_groups(np.unique(subject_ids), val_frac, test_frac, rng)
+    if test_subjects is None:
+        s_tr, s_va, s_te = _partition_groups(np.unique(subject_ids), val_frac, test_frac, rng)
+    else:
+        everyone = np.unique(subject_ids)
+        s_te = np.sort(np.asarray(test_subjects))
+        if not np.isin(s_te, everyone).all():
+            raise ValueError("test_subjects contains people who are not in the data")
+        rest = rng.permutation(np.setdiff1d(everyone, s_te))
+        n_val = max(1, int(round(val_frac * len(everyone)))) if val_frac > 0 else 0
+        if len(rest) <= n_val:
+            raise ValueError("too few people left for training after fixing the test people")
+        s_va, s_tr = np.sort(rest[:n_val]), np.sort(rest[n_val:])
     t_tr, t_va, t_te = _partition_sentences(sentence_ids, val_frac, test_frac, rng, block_size)
 
     def pick(subj, sent):

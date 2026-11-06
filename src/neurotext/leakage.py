@@ -32,6 +32,7 @@ import numpy as np
 from .data import EEGData, check_no_leakage, subject_and_sentence_split
 from .privacy import identity_leakage
 from .privacy.probes import PROBES
+from .privacy.verification import verification
 
 
 def align_by_key(raw: EEGData, bands: EEGData) -> tuple[np.ndarray, np.ndarray]:
@@ -66,9 +67,16 @@ def evaluate_identity(
     seed: int = 0,
     n_splits: int = 4,
     populations: tuple[str, ...] = ("new_users", "everyone"),
+    verify: bool = False,
+    n_pairs: int = 20000,
 ) -> dict:
     """result[population][representation][probe] = identity_leakage(...) dict (or None if the
-    population is too small to score)."""
+    population is too small to score).
+
+    With `verify=True`, result["new_users"][representation]["verify"] also holds open-set verification
+    (EER / AUC of the cosine score and of the LDA score fitted on the people who are NOT new users),
+    from pairs of recordings in different groups. Not computed for "everyone": the LDA would be fitted
+    on the people it is then scored on."""
     out: dict = {}
     all_pops = {"new_users": np.asarray(new_mask, dtype=bool), "everyone": np.ones(len(subject_ids), bool)}
     for pop in populations:
@@ -84,16 +92,26 @@ def evaluate_identity(
                         probe=probe, standardize=True)
                 except ValueError:
                     out[pop][name][probe] = None
+            if verify and pop == "new_users":
+                fit = ~mask
+                try:
+                    out[pop][name]["verify"] = verification(
+                        x[mask], subject_ids[mask], groups,
+                        x[fit] if fit.any() else None, subject_ids[fit] if fit.any() else None,
+                        n_pairs=n_pairs, seed=seed)
+                except ValueError:
+                    out[pop][name]["verify"] = None
     return out
 
 
-def run_identity_seed(raw, band_x: np.ndarray, cfg: dict, seed: int, probes: tuple[str, ...] = PROBES) -> dict:
+def run_identity_seed(raw, band_x: np.ndarray, cfg: dict, seed: int, probes: tuple[str, ...] = PROBES,
+                      verify: bool = False, feature_reps: bool = True) -> dict:
     """Train the encoder for one seed (same recipe as `neurotext.experiment.run_once`) and score
     identity leakage of every representation. `band_x` is the (N, F) band-power table, row-aligned
     with `raw.x`. Needs PyTorch."""
     import torch
 
-    from .models import EEGEncoder, TextProjector
+    from .models import TextProjector, build_encoder, model_options
     from .training import embed, fit_alignment
 
     block = cfg["split"].get("block_size") or 1
@@ -102,7 +120,8 @@ def run_identity_seed(raw, band_x: np.ndarray, cfg: dict, seed: int, probes: tup
 
     m = cfg["model"]
     torch.manual_seed(seed)
-    encoder = EEGEncoder(raw.x.shape[1], raw.x.shape[2], **m)
+    enc_name, enc_opts = model_options(m)
+    encoder = build_encoder(enc_name, raw.x.shape[1], raw.x.shape[2], **enc_opts)
     untrained = copy.deepcopy(encoder)  # control: same architecture, same initial weights, never trained
     projector = TextProjector(raw.text_emb.shape[1], m["out_dim"])
     history = fit_alignment(encoder, projector, raw.x[split.train], raw.sentence_ids[split.train], raw.text_emb,
@@ -111,10 +130,11 @@ def run_identity_seed(raw, band_x: np.ndarray, cfg: dict, seed: int, probes: tup
     reps = {
         "trained encoder": embed(encoder, raw.x),
         "untrained encoder": embed(untrained, raw.x),
-        "band power (all features)": band_x.astype(np.float32),
-        "band power, PCA to embedding size": _pca(band_x, m["out_dim"]),
     }
+    if feature_reps:  # the feature representations do not depend on the encoder: skip them when comparing encoders
+        reps["band power (all features)"] = band_x.astype(np.float32)
+        reps["band power, PCA to embedding size"] = _pca(band_x, m["out_dim"])
     new_mask = np.isin(raw.subject_ids, split.groups["test_subjects"])
-    res = evaluate_identity(reps, raw.subject_ids, raw.sentence_ids, new_mask, block, probes, seed)
+    res = evaluate_identity(reps, raw.subject_ids, raw.sentence_ids, new_mask, block, probes, seed, verify=verify)
     return {"seed": seed, "n_new_users": int(len(split.groups["test_subjects"])),
             "alignment_loss": [history[0], history[-1]], "identity": res}

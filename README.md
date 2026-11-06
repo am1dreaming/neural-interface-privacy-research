@@ -2,15 +2,16 @@
 
 *EEG decoding, identity leakage, and the cost of defences.*
 
-Open ML and cybersecurity research: can a sentence be decoded from non-invasive EEG, do the embeddings of such a decoder reveal who the person is, and what do defences cost? Status as of 1 November 2026.
+Open ML and cybersecurity research: can a sentence be decoded from non-invasive EEG, do the embeddings of such a decoder reveal who the person is, and what do defences cost? Status as of 6 November 2026. Results on the development group are in; the one-shot final evaluation on held-out people has **not** been run yet (see "Extended audit").
 
 ## Key findings
 
 1. **No evidence of EEG → sentence decoding.** On ZuCo 2.0 (natural reading, 16 people, 349 sentences), new people and new sentences give top-1 of 1.2–1.3% against a random level of 1.1–1.3%. A ridge model on spectral features and a neural network on raw EEG are equally at chance. The method is sensitive, though: a synthetic signal at 5% of the noise amplitude is found in 64–73% of cases.
 2. **A data trap.** Within one person the result is 4.7% (4× chance), but a baseline that never sees EEG and only knows the sentence's position in the session gets 13.1%. With test blocks of 30 consecutive sentences it falls back to chance. Random splits leak through neighbouring sentences, so real data needs a block split.
-3. **Identity leaks.** Spectral features identify a person at 99.6–100%, even after PCA to 32 dimensions. A 32-d encoder keeps much less, and a *trained* encoder leaks less than an *untrained* one with the same initialisation.
+3. **Identity leaks, and it comes from the signal, not from the decoder.** Spectral features identify a person at 99.6–100% on ZuCo (16 people) and at 96.5% among 64 people on a second dataset (EEGMMIDB, chance 1.6%), even after PCA to 32 dimensions (79%). A 32-d encoder keeps much less, and a *trained* encoder leaks no more than an *untrained* one with the same initialisation (less, for three of four architectures). Training for text does not create the leak; the information is already in the spectrum.
 4. **Defences have a price.** The best one tested (PCA to 8 directions) is almost free in accuracy. Subtracting identity directions and adversarial training do not protect against a strong attacker.
 5. **Per-person adapters** no longer hurt, but a benefit could not be shown.
+6. **The leak is spread out.** No single frequency group is necessary (removing any one changes accuracy by ≤1.1 points), and a single channel already identifies a person well above chance. Normalising amplitude per recording lowers accuracy from 0.96 to 0.85, so part of it is amplitude (contact, cap fit), but most survives. These are within-session results; they do not show that the fingerprint is stable over days.
 
 Everything is reproducible and comes with controls (position oracle, block split, planted signal, untrained encoder). Null results are included.
 
@@ -104,12 +105,108 @@ The base model is frozen and a light adapter is trained per person (channel scal
 - A single run is too noisy for comparisons: a small test shifts top-1 by several points. For conclusions use `run_seeds.py`. The same seed gives the same result (checked by a test).
 - Quantisation: standard PyTorch builds for macOS lack the needed engine, so the int8 size cannot be measured. In that case `quantized_size_bytes` returns `None`, and `estimate_int8_linear_bytes` gives an analytical estimate (on Linux it differs from the measurement by about 6%).
 
+## Extended audit (development results; final held-out run pending)
+
+`PREREGISTRATION.md` fixes the hypotheses, metrics, the held-out group and the multiple-comparison rule. Two groups of people are used on EEGMMIDB (109 people, 64 channels, no text): 85 development people (84 usable) and 24 held-out people (22 usable) that are touched **once**, at the very end (`experiments/final_holdout.py`). Everything below is on ZuCo or on the development group. Confirmatory and exploratory results are kept apart.
+
+EEGMMIDB has no text, so only the leakage side is tested there: the encoder is aligned with an embedding of the instructed run type (plus a random per-run component), so "trained encoder" on this dataset is **not** a text decoder. Decoding quality is neither measured nor claimed.
+
+### 6. Leakage against the number of people (EEGMMIDB, development group, 10 seeds) — confirmatory (H2)
+
+Encoder trained on 20 people, attacker evaluated on people the encoder never saw. Chance is 1/n.
+
+| People (n) | 5 | 10 | 20 | 40 | 64 |
+|---|---|---|---|---|---|
+| Chance | 0.200 | 0.100 | 0.050 | 0.025 | 0.016 |
+| Spectral features, all (linear) | 0.982 | 0.969 | 0.973 | 0.967 | 0.965 |
+| Spectral features, PCA to 32 (linear) | 0.958 | 0.931 | 0.891 | 0.833 | 0.793 |
+| Untrained encoder (linear) | 0.448 | 0.299 | 0.212 | 0.134 | 0.104 |
+| Trained encoder (linear) | 0.406 | 0.259 | 0.183 | 0.115 | 0.086 |
+
+Open-set verification (LDA score fitted on *other* people; EER, 0.5 = chance): spectral features 0.064 → 0.127 from n=5 to n=64, PCA-32 about 0.16, trained encoder 0.465–0.470, untrained encoder 0.452–0.455.
+
+![Identification and verification against the number of people](results/fig2_scaling_curve.png)
+
+- **H2 is confirmed in all 10 pre-registered tests** (accuracy above 1/n and LDA EER below 0.5 at every n, Holm over 10). For the trained encoder the effect is real but small in verification (EER about 0.47).
+- Attacker access matters more than anything else: with the full spectral features closed-set accuracy barely drops from 5 to 64 people; through a 32-d trained encoder it falls to about 5× chance.
+- The untrained encoder is as leaky as or leakier than the trained one, as on ZuCo.
+
+### 7. Four encoders on ZuCo (new people, 10 seeds) — confirmatory (H4) plus exploratory contrast
+
+32-d embeddings, 4 new people per seed (chance 0.25). Table: `results/encoders_table.md`.
+
+| Encoder | Linear probe | Excess over chance | LDA EER | Trained − untrained (exploratory) |
+|---|---|---|---|---|
+| CNN | 0.794 | +0.544 [+0.496, +0.593] | 0.395 | −0.126 [−0.160, −0.092] |
+| EEGNet | 0.537 | +0.287 [+0.229, +0.345] | 0.456 | +0.075 [+0.023, +0.127] |
+| Transformer | 0.448 | +0.198 [+0.172, +0.224] | 0.482 | −0.041 [−0.079, −0.003] |
+| Linear (PCA-like) | 0.289 | +0.039 [+0.025, +0.052] | 0.500 | −0.031 [−0.053, −0.008] |
+
+![Four encoders](results/fig5_encoders.png)
+
+- **H4 is confirmed for all 8 tests** (every architecture is above chance for both probes, Holm over 8). For the linear encoder the excess is statistically clear but practically negligible.
+- The trained-minus-untrained contrast was **not** a pre-registered test. Three architectures leak less after training; only EEGNet leaks more.
+- Closed-set accuracy overstates the open-set risk: the CNN reaches 0.79 accuracy but only 0.395 EER, and the transformer has +0.20 excess but EER 0.48.
+- Do not read the ranking as a statement about architectures in general. The CNN probably keeps channel-wise power more directly, but this was not tested; parameter counts differ.
+- H4 was **not blind**: a 3-seed, 5-epoch probe run on ZuCo preceded the pre-registration file (listed in its section 6).
+
+### 8. Where the leakage comes from (EEGMMIDB, development group, 5 seeds) — exploratory
+
+84 people, chance 0.012, linear probe on interpretable features.
+
+| Setting | Accuracy | LDA EER |
+|---|---|---|
+| All features (512) | 0.960 [0.957, 0.964] | 0.084 |
+| Only beta | 0.937 | 0.082 |
+| Only gamma | 0.903 | 0.122 |
+| Only RMS | 0.863 | 0.168 |
+| Only alpha / theta / delta | 0.830 / 0.832 / 0.796 | 0.15–0.22 |
+| Only individual alpha peak | 0.620 | 0.228 |
+| Control: amplitude normalised per recording | 0.854 | 0.183 |
+| Control: edges trimmed 10% | 0.955 | 0.090 |
+| Control: normalised and trimmed | 0.868 | 0.197 |
+
+![Feature ablation](results/fig4_feature_ablation.png)
+
+- Removing any one group costs at most 0.011 accuracy: the information is redundant. Removing the alpha peak slightly *raises* accuracy.
+- Single channels give +0.29 to +0.41 over chance (occipital strongest: Iz, Oz, O1; frontal weakest).
+- At 80 Hz the "gamma" group is capped at 0.9×Nyquist (about 36 Hz), so it is the upper beta range, not true gamma. Beta and upper-beta features can include muscle activity, which is also person-specific. The ablation does not separate brain from muscle or from recording conditions.
+
+### What did not work, or is not shown
+
+- Decoding sentences from EEG: at chance in every setting (section 1). Deliberately not improved.
+- Adversarial training and identity-direction subtraction as defences against a non-linear attacker (section 3).
+- Per-person adapters: no benefit shown (section 4).
+- The individual alpha peak as an identity carrier: much weaker than band power, and not needed.
+- Learned-encoder training as the source of the leak: it is not (sections 2, 6, 7).
+
+### Threat model in one paragraph
+
+An attacker who holds reference recordings of the people and gets either raw EEG, its spectral features, or an embedding from any encoder tested here can name the person well above chance. The strongest channel is the spectral features themselves (96.5% among 64 people, EER 0.06–0.13). Embeddings from a small encoder leak much less, and in an open-set "same person or not" setting for unseen people they are close to chance (EER 0.45–0.50) except for the CNN on ZuCo. This is within one recording session; cross-day stability is untested. Defences that act on the embedding do not address leakage from the raw signal.
+
+### Final held-out evaluation (H1, H3) — not run yet
+
+`experiments/final_holdout.py` evaluates the 22 held-out people exactly once. The guard in `neurotext/audit.py` refuses a second run and logs reruns in `results/deviations.log`. This section will be filled in after that run.
+
+```bash
+python data/download_eegmmidb.py                                                    # ~2 GB, resumable
+python experiments/encoder_robustness.py --config configs/zuco2_nr.yaml --seeds 10
+python experiments/scaling_curve.py --config configs/eegmmidb.yaml --seeds 10
+python experiments/feature_ablation.py --config configs/eegmmidb.yaml --seeds 5 --probes linear --channels
+python experiments/make_plots.py                                                    # every figure that has results
+python experiments/final_holdout.py --config configs/eegmmidb_final.yaml --seeds 10 # ONCE, last
+# pipeline check without any data (synthetic, not a result):
+python experiments/scaling_curve.py --config configs/audit_synthetic.yaml --seeds 3 --n-list 3 5 8 --n-train 10 --epochs 3
+```
+
 ## Limitations
 
-- Identity leakage was measured within a single session (one recording per person). For another day accuracy may be noticeably lower. Absolute power can carry a fingerprint of the session and equipment rather than of the brain.
+- Identity leakage was measured within a single session (one recording per person), on ZuCo and on EEGMMIDB. For another day accuracy may be noticeably lower. Absolute power can carry a fingerprint of the session and equipment rather than of the brain; the amplitude-normalised control keeps 0.85, which is a partial check only.
 - There are 4 new people in the test on real data and 6 on synthetic. Seeds change initialisation and the choice of "new people" but not the data, so intervals over seeds are a lower bound.
 - Defences were tested on synthetic data only.
-- The open-set setting "same person or different" for new people was not tested.
+- Open-set verification was measured on ZuCo (encoders) and on the EEGMMIDB development group. The held-out result is pending.
+- On EEGMMIDB the encoder target is synthetic (run type), so "trained encoder" results there say little about a real text decoder.
+- Seeds are not independent replicates on a fixed dataset; all intervals over seeds are a lower bound on the uncertainty.
 - Decoding results apply to sentence-averaged features and to TF-IDF as the text encoder.
 
 ## Related work
@@ -132,10 +229,12 @@ Status as of 1 November 2026. Abstracts and pages were read; only numbers checke
 configs/        yaml experiment configs
 data/           preparation instructions and scripts (the data itself is not stored in git)
 src/neurotext/
-  data/         splits, ZuCo 2.0 loader, synthetic data
-  models/       encoder, text alignment, adapters
+  data/         splits, ZuCo 2.0 and EEGMMIDB loaders, synthetic data
+  models/       encoders (transformer, linear, CNN, EEGNet), text alignment, adapters
   eval/         metrics and baselines
-  privacy/      identity-leakage probes and defences
+  privacy/      identity-leakage probes, open-set verification
+  features.py   interpretable features and recording-artefact controls
+  plots.py      all figures from the result files
   efficiency/   parameter counting, channel subsets, quantisation (no experiments on these in the report)
 experiments/    one file = one experiment
 results/        figures

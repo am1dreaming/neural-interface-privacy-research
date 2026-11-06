@@ -1,0 +1,83 @@
+YAC: kept 247/349  dropped {'no_eeg': 102, 'too_short': 0, 'non_finite': 0}
+YAG: kept 349/349  dropped {'no_eeg': 0, 'too_short': 0, 'non_finite': 0}
+YAK: kept 248/349  dropped {'no_eeg': 51, 'too_short': 50, 'non_finite': 0}
+YDR: kept 343/349  dropped {'no_eeg': 3, 'too_short': 3, 'non_finite': 0}
+YFS: kept 335/349  dropped {'no_eeg': 13, 'too_short': 1, 'non_finite': 0}
+YHS: kept 349/349  dropped {'no_eeg': 0, 'too_short': 0, 'non_finite': 0}
+YIS: kept 349/349  dropped {'no_eeg': 0, 'too_short': 0, 'non_finite': 0}
+YLS: kept 343/349  dropped {'no_eeg': 6, 'too_short': 0, 'non_finite': 0}
+YMD: kept 342/349  dropped {'no_eeg': 7, 'too_short': 0, 'non_finite': 0}
+YMS: kept 346/349  dropped {'no_eeg': 3, 'too_short': 0, 'non_finite': 0}
+YRH: kept 297/349  dropped {'no_eeg': 52, 'too_short': 0, 'non_finite': 0}
+YRK: kept 339/349  dropped {'no_eeg': 10, 'too_short': 0, 'non_finite': 0}
+YRP: kept 342/349  dropped {'no_eeg': 6, 'too_short': 1, 'non_finite': 0}
+YSD: kept 348/349  dropped {'no_eeg': 1, 'too_short': 0, 'non_finite': 0}
+YSL: kept 343/349  dropped {'no_eeg': 6, 'too_short': 0, 'non_finite': 0}
+YTL: kept 344/349  dropped {'no_eeg': 1, 'too_short': 4, 'non_finite': 0}
+data: 5264 recordings, 16 people; features 840-d
+
+transformer-32   seed  0: new users, linear probe, accuracy 0.451 (chance 0.250)
+transformer-32   seed  1: new users, linear probe, accuracy 0.382 (chance 0.250)
+transformer-32   seed  2: new users, linear probe, accuracy 0.485 (chance 0.250)
+transformer-32   seed  3: new users, linear probe, accuracy 0.444 (chance 0.250)
+transformer-32   seed  4: new users, linear probe, accuracy 0.500 (chance 0.250)
+transformer-32   seed  5: new users, linear probe, accuracy 0.420 (chance 0.250)
+transformer-32   seed  6: new users, linear probe, accuracy 0.455 (chance 0.250)
+transformer-32   seed  7: new users, linear probe, accuracy 0.422 (chance 0.250)
+transformer-32   seed  8: new users, linear probe, accuracy 0.435 (chance 0.250)
+transformer-32   seed  9: new users, linear probe, accuracy 0.486 (chance 0.250)
+linear-32        seed  0: new users, linear probe, accuracy 0.283 (chance 0.250)
+linear-32        seed  1: new users, linear probe, accuracy 0.268 (chance 0.250)
+linear-32        seed  2: new users, linear probe, accuracy 0.252 (chance 0.250)
+linear-32        seed  3: new users, linear probe, accuracy 0.291 (chance 0.250)
+linear-32        seed  4: new users, linear probe, accuracy 0.303 (chance 0.250)
+linear-32        seed  5: new users, linear probe, accuracy 0.277 (chance 0.250)
+linear-32        seed  6: new users, linear probe, accuracy 0.300 (chance 0.250)
+linear-32        seed  7: new users, linear probe, accuracy 0.297 (chance 0.250)
+linear-32        seed  8: new users, linear probe, accuracy 0.303 (chance 0.250)
+linear-32        seed  9: new users, linear probe, accuracy 0.314 (chance 0.250)
+cnn-32           seed  0: new users, linear probe, accuracy 0.788 (chance 0.250)
+cnn-32           seed  1: new users, linear probe, accuracy 0.829 (chance 0.250)
+cnn-32           seed  2: new users, linear probe, accuracy 0.883 (chance 0.250)
+cnn-32           seed  3: new users, linear probe, accuracy 0.723 (chance 0.250)
+cnn-32           seed  4: new users, linear probe, accuracy 0.812 (chance 0.250)
+cnn-32           seed  5: new users, linear probe, accuracy 0.657 (chance 0.250)
+cnn-32           seed  6: new users, linear probe, accuracy 0.859 (chance 0.250)
+cnn-32           seed  7: new users, linear probe, accuracy 0.827 (chance 0.250)
+cnn-32           seed  8: new users, linear probe, accuracy 0.749 (chance 0.250)
+cnn-32           seed  9: new users, linear probe, accuracy 0.818 (chance 0.250)
+eegnet-32        seed  0: new users, linear probe, accuracy 0.498 (chance 0.250)
+eegnet-32        seed  1: new users, linear probe, accuracy 0.472 (chance 0.250)
+eegnet-32        seed  2: new users, linear probe, accuracy 0.657 (chance 0.250)
+eegnet-32        seed  3: new users, linear probe, accuracy 0.640 (chance 0.250)
+eegnet-32        seed  4: new users, linear probe, accuracy 0.558 (chance 0.250)
+eegnet-32        seed  5: new users, linear probe, accuracy 0.465 (chance 0.250)
+eegnet-32        seed  6: new users, linear probe, accuracy 0.463 (chance 0.250)
+eegnet-32        seed  7: new users, linear probe, accuracy 0.645 (chance 0.250)
+eegnet-32        seed  8: new users, linear probe, accuracy 0.463 (chance 0.250)
+eegnet-32        seed  9: new users, linear probe, accuracy 0.509 (chance 0.250)
+
+== new people, trained encoder; accuracy minus chance (chance = 0.250), mean [95% CI] over seeds ==
+encoder                           linear probe                     mlp probe                   LDA EER
+transformer-32         +0.198 [+0.172, +0.224]       +0.185 [+0.158, +0.213]      0.482 [0.475, 0.490]
+linear-32              +0.039 [+0.025, +0.052]       +0.042 [+0.025, +0.060]      0.500 [0.499, 0.501]
+cnn-32                 +0.544 [+0.496, +0.593]       +0.531 [+0.481, +0.581]      0.395 [0.365, 0.426]
+eegnet-32              +0.287 [+0.229, +0.345]       +0.298 [+0.244, +0.351]      0.456 [0.440, 0.473]
+
+== paired: trained minus untrained (same architecture and initial weights) ==
+transformer-32    linear: -0.041 [-0.079, -0.003] worse  mlp: -0.084 [-0.126, -0.042] worse
+linear-32         linear: -0.031 [-0.053, -0.008] worse  mlp: -0.025 [-0.052, +0.002] no evidence of a difference
+cnn-32            linear: -0.126 [-0.160, -0.092] worse  mlp: -0.142 [-0.181, -0.104] worse
+eegnet-32         linear: +0.075 [+0.023, +0.127] better  mlp: +0.071 [+0.019, +0.123] better
+
+== H4 (pre-registered): trained encoder above chance; one-sided t-test over seeds, Holm over the family ==
+  transformer/linear     excess +0.198 [+0.172, +0.224]  p=0.0000  Holm p=0.0000  CONFIRMED
+  transformer/mlp        excess +0.185 [+0.158, +0.213]  p=0.0000  Holm p=0.0000  CONFIRMED
+  linear/linear          excess +0.039 [+0.025, +0.052]  p=0.0001  Holm p=0.0001  CONFIRMED
+  linear/mlp             excess +0.042 [+0.025, +0.060]  p=0.0002  Holm p=0.0002  CONFIRMED
+  cnn/linear             excess +0.544 [+0.496, +0.593]  p=0.0000  Holm p=0.0000  CONFIRMED
+  cnn/mlp                excess +0.531 [+0.481, +0.581]  p=0.0000  Holm p=0.0000  CONFIRMED
+  eegnet/linear          excess +0.287 [+0.229, +0.345]  p=0.0000  Holm p=0.0000  CONFIRMED
+  eegnet/mlp             excess +0.298 [+0.244, +0.351]  p=0.0000  Holm p=0.0000  CONFIRMED
+
+saved results/encoder_robustness.json

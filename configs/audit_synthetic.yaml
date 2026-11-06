@@ -1,0 +1,47 @@
+# Pipeline check of the audit experiments (encoders, scaling curve, feature ablation) on SYNTHETIC data.
+# Not a research result: it only shows that the code runs end to end.
+#   python experiments/encoder_robustness.py --config configs/audit_synthetic.yaml --seeds 3 --epochs 3
+#   python experiments/scaling_curve.py --config configs/audit_synthetic.yaml --seeds 3 --n-list 3 5 8 --n-train 10 --epochs 3
+#   python experiments/feature_ablation.py --config configs/audit_synthetic.yaml --seeds 3
+seed: 0
+
+data:
+  source: synthetic
+  n_subjects: 30
+  n_sentences: 60
+  trials_per_sentence: 2
+  n_channels: 16
+  n_times: 128
+  text_dim: 16
+  snr: 1.5
+  subject_variability: 1.0
+
+features:
+  sfreq: 100                  # synthetic data has no sampling rate; assumed for the spectral features
+
+split:
+  val_frac: 0.15
+  test_frac: 0.25
+  block_size: 10
+
+model:
+  name: transformer
+  d_model: 32
+  out_dim: 16
+  n_layers: 1
+  n_heads: 2
+  patch: 16
+
+train:
+  epochs: 5
+  lr: 0.001
+  batch_size: 64
+  temperature: 0.1
+
+defence:
+  noise: [0.5]
+  pca: [4]
+  identity_null: [4]
+  adversarial: []
+
+output_dir: results

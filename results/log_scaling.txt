@@ -1,0 +1,176 @@
+  [1/85] S001: 84 windows from 14 runs
+  [2/85] S003: 84 windows from 14 runs
+  [3/85] S004: 84 windows from 14 runs
+  [4/85] S007: 84 windows from 14 runs
+  [5/85] S008: 84 windows from 14 runs
+  [6/85] S009: 84 windows from 14 runs
+  [7/85] S010: 84 windows from 14 runs
+  [8/85] S011: 84 windows from 14 runs
+  [9/85] S013: 84 windows from 14 runs
+  [10/85] S014: 84 windows from 14 runs
+  [11/85] S015: 84 windows from 14 runs
+  [12/85] S016: 84 windows from 14 runs
+  [13/85] S018: 84 windows from 14 runs
+  [14/85] S020: 84 windows from 14 runs
+  [15/85] S021: 84 windows from 14 runs
+  [16/85] S023: 84 windows from 14 runs
+  [17/85] S025: 84 windows from 14 runs
+  [18/85] S026: 84 windows from 14 runs
+  [19/85] S027: 84 windows from 14 runs
+  [20/85] S028: 84 windows from 14 runs
+  [21/85] S030: 84 windows from 14 runs
+  [22/85] S031: 84 windows from 14 runs
+  [23/85] S033: 84 windows from 14 runs
+  [24/85] S034: 84 windows from 14 runs
+  [25/85] S035: 84 windows from 14 runs
+  [26/85] S036: 84 windows from 14 runs
+  [27/85] S037: 84 windows from 14 runs
+  [28/85] S039: 84 windows from 14 runs
+  [29/85] S041: 84 windows from 14 runs
+  [30/85] S042: 84 windows from 14 runs
+  [31/85] S043: 84 windows from 14 runs
+  [32/85] S044: 84 windows from 14 runs
+  [33/85] S045: 84 windows from 14 runs
+  [34/85] S046: 84 windows from 14 runs
+  [35/85] S047: 84 windows from 14 runs
+  [36/85] S048: 84 windows from 14 runs
+  [37/85] S049: 84 windows from 14 runs
+  [38/85] S050: 84 windows from 14 runs
+  [39/85] S051: 84 windows from 14 runs
+  [40/85] S052: 84 windows from 14 runs
+  [41/85] S053: 84 windows from 14 runs
+  [42/85] S054: 84 windows from 14 runs
+  [43/85] S055: 84 windows from 14 runs
+  [44/85] S056: 84 windows from 14 runs
+  [45/85] S057: 84 windows from 14 runs
+  [46/85] S058: 84 windows from 14 runs
+  [47/85] S059: 84 windows from 14 runs
+  [48/85] S060: 84 windows from 14 runs
+  [49/85] S061: 84 windows from 14 runs
+  [50/85] S062: 84 windows from 14 runs
+  [51/85] S063: 84 windows from 14 runs
+  [52/85] S064: 84 windows from 14 runs
+  [53/85] S065: 84 windows from 14 runs
+  [54/85] S068: 84 windows from 14 runs
+  [55/85] S069: 84 windows from 14 runs
+  [56/85] S070: 84 windows from 14 runs
+  [57/85] S071: 84 windows from 14 runs
+  [58/85] S072: 84 windows from 14 runs
+  [59/85] S073: 84 windows from 14 runs
+  [60/85] S074: 84 windows from 14 runs
+  [61/85] S075: 84 windows from 14 runs
+  [62/85] S076: 84 windows from 14 runs
+  [63/85] S077: 84 windows from 14 runs
+  [64/85] S078: 84 windows from 14 runs
+  [65/85] S082: 84 windows from 14 runs
+  [66/85] S084: 84 windows from 14 runs
+  [67/85] S085: 84 windows from 14 runs
+  [68/85] S086: 84 windows from 14 runs
+  [69/85] S087: 84 windows from 14 runs
+  [70/85] S089: 84 windows from 14 runs
+  [71/85] S090: 84 windows from 14 runs
+  [72/85] S091: 84 windows from 14 runs
+  [74/85] S093: 84 windows from 14 runs
+  [75/85] S094: 84 windows from 14 runs
+  [76/85] S095: 84 windows from 14 runs
+  [77/85] S097: 84 windows from 14 runs
+  [78/85] S098: 84 windows from 14 runs
+  [79/85] S101: 84 windows from 14 runs
+  [80/85] S103: 84 windows from 14 runs
+  [81/85] S104: 84 windows from 14 runs
+  [82/85] S105: 84 windows from 14 runs
+  [83/85] S106: 84 windows from 14 runs
+  [84/85] S107: 84 windows from 14 runs
+  [85/85] S109: 84 windows from 14 runs
+data: 7056 recordings, 84 people; n list [5, 10, 20, 40, 64]
+
+seed  0 n=  5: linear probe accuracy 0.378 (chance 0.200)
+seed  0 n= 10: linear probe accuracy 0.265 (chance 0.100)
+seed  0 n= 20: linear probe accuracy 0.159 (chance 0.050)
+seed  0 n= 40: linear probe accuracy 0.100 (chance 0.025)
+seed  0 n= 64: linear probe accuracy 0.093 (chance 0.016)
+seed  1 n=  5: linear probe accuracy 0.431 (chance 0.200)
+seed  1 n= 10: linear probe accuracy 0.275 (chance 0.100)
+seed  1 n= 20: linear probe accuracy 0.209 (chance 0.050)
+seed  1 n= 40: linear probe accuracy 0.127 (chance 0.025)
+seed  1 n= 64: linear probe accuracy 0.084 (chance 0.016)
+seed  2 n=  5: linear probe accuracy 0.315 (chance 0.200)
+seed  2 n= 10: linear probe accuracy 0.238 (chance 0.100)
+seed  2 n= 20: linear probe accuracy 0.184 (chance 0.050)
+seed  2 n= 40: linear probe accuracy 0.114 (chance 0.025)
+seed  2 n= 64: linear probe accuracy 0.087 (chance 0.016)
+seed  3 n=  5: linear probe accuracy 0.435 (chance 0.200)
+seed  3 n= 10: linear probe accuracy 0.274 (chance 0.100)
+seed  3 n= 20: linear probe accuracy 0.169 (chance 0.050)
+seed  3 n= 40: linear probe accuracy 0.116 (chance 0.025)
+seed  3 n= 64: linear probe accuracy 0.096 (chance 0.016)
+seed  4 n=  5: linear probe accuracy 0.436 (chance 0.200)
+seed  4 n= 10: linear probe accuracy 0.230 (chance 0.100)
+seed  4 n= 20: linear probe accuracy 0.160 (chance 0.050)
+seed  4 n= 40: linear probe accuracy 0.098 (chance 0.025)
+seed  4 n= 64: linear probe accuracy 0.078 (chance 0.016)
+seed  5 n=  5: linear probe accuracy 0.397 (chance 0.200)
+seed  5 n= 10: linear probe accuracy 0.308 (chance 0.100)
+seed  5 n= 20: linear probe accuracy 0.195 (chance 0.050)
+seed  5 n= 40: linear probe accuracy 0.115 (chance 0.025)
+seed  5 n= 64: linear probe accuracy 0.085 (chance 0.016)
+seed  6 n=  5: linear probe accuracy 0.348 (chance 0.200)
+seed  6 n= 10: linear probe accuracy 0.235 (chance 0.100)
+seed  6 n= 20: linear probe accuracy 0.196 (chance 0.050)
+seed  6 n= 40: linear probe accuracy 0.119 (chance 0.025)
+seed  6 n= 64: linear probe accuracy 0.085 (chance 0.016)
+seed  7 n=  5: linear probe accuracy 0.487 (chance 0.200)
+seed  7 n= 10: linear probe accuracy 0.289 (chance 0.100)
+seed  7 n= 20: linear probe accuracy 0.213 (chance 0.050)
+seed  7 n= 40: linear probe accuracy 0.133 (chance 0.025)
+seed  7 n= 64: linear probe accuracy 0.091 (chance 0.016)
+seed  8 n=  5: linear probe accuracy 0.369 (chance 0.200)
+seed  8 n= 10: linear probe accuracy 0.225 (chance 0.100)
+seed  8 n= 20: linear probe accuracy 0.143 (chance 0.050)
+seed  8 n= 40: linear probe accuracy 0.107 (chance 0.025)
+seed  8 n= 64: linear probe accuracy 0.075 (chance 0.016)
+seed  9 n=  5: linear probe accuracy 0.461 (chance 0.200)
+seed  9 n= 10: linear probe accuracy 0.254 (chance 0.100)
+seed  9 n= 20: linear probe accuracy 0.203 (chance 0.050)
+seed  9 n= 40: linear probe accuracy 0.122 (chance 0.025)
+seed  9 n= 64: linear probe accuracy 0.087 (chance 0.016)
+
+== accuracy [95% CI over seeds] (chance = 1/n) ==
+
+  trained encoder
+    linear   n=5: 0.406 [0.367, 0.444]  n=10: 0.259 [0.239, 0.279]  n=20: 0.183 [0.166, 0.200]  n=40: 0.115 [0.107, 0.123]  n=64: 0.086 [0.082, 0.091]
+    mlp      n=5: 0.356 [0.321, 0.391]  n=10: 0.214 [0.199, 0.229]  n=20: 0.146 [0.130, 0.163]  n=40: 0.085 [0.079, 0.090]  n=64: 0.062 [0.060, 0.064]
+
+  untrained encoder
+    linear   n=5: 0.448 [0.400, 0.496]  n=10: 0.299 [0.275, 0.323]  n=20: 0.212 [0.196, 0.227]  n=40: 0.134 [0.129, 0.139]  n=64: 0.104 [0.099, 0.109]
+    mlp      n=5: 0.448 [0.408, 0.487]  n=10: 0.297 [0.272, 0.321]  n=20: 0.197 [0.180, 0.214]  n=40: 0.119 [0.111, 0.127]  n=64: 0.092 [0.087, 0.097]
+
+  band power (all features)
+    linear   n=5: 0.982 [0.976, 0.989]  n=10: 0.969 [0.958, 0.981]  n=20: 0.973 [0.968, 0.978]  n=40: 0.967 [0.961, 0.972]  n=64: 0.965 [0.961, 0.968]
+    mlp      n=5: 0.967 [0.953, 0.980]  n=10: 0.957 [0.944, 0.969]  n=20: 0.957 [0.951, 0.964]  n=40: 0.946 [0.939, 0.953]  n=64: 0.941 [0.936, 0.946]
+
+  band power, PCA to embedding size
+    linear   n=5: 0.958 [0.949, 0.966]  n=10: 0.931 [0.919, 0.944]  n=20: 0.891 [0.875, 0.907]  n=40: 0.833 [0.809, 0.856]  n=64: 0.793 [0.775, 0.811]
+    mlp      n=5: 0.949 [0.940, 0.958]  n=10: 0.930 [0.919, 0.942]  n=20: 0.891 [0.873, 0.908]  n=40: 0.838 [0.816, 0.860]  n=64: 0.797 [0.782, 0.813]
+
+== open-set verification, LDA score: EER [95% CI] (chance 0.5) ==
+  trained encoder                       n=5: 0.465 [0.459, 0.471]  n=10: 0.465 [0.460, 0.470]  n=20: 0.462 [0.457, 0.468]  n=40: 0.466 [0.462, 0.469]  n=64: 0.470 [0.467, 0.473]
+  untrained encoder                     n=5: 0.454 [0.443, 0.466]  n=10: 0.455 [0.447, 0.463]  n=20: 0.452 [0.448, 0.456]  n=40: 0.455 [0.453, 0.457]  n=64: 0.452 [0.450, 0.454]
+  band power (all features)             n=5: 0.064 [0.050, 0.077]  n=10: 0.059 [0.043, 0.075]  n=20: 0.058 [0.050, 0.065]  n=40: 0.080 [0.070, 0.090]  n=64: 0.127 [0.118, 0.136]
+  band power, PCA to embedding size     n=5: 0.166 [0.139, 0.194]  n=10: 0.163 [0.148, 0.178]  n=20: 0.157 [0.149, 0.165]  n=40: 0.172 [0.159, 0.185]  n=64: 0.165 [0.158, 0.172]
+
+== H2 (pre-registered), trained encoder: one-sided t-tests over seeds, Holm over the family ==
+  n=5 accuracy>1/n       p=0.0000  Holm p=0.0000  CONFIRMED
+  n=5 LDA EER<0.5        p=0.0000  Holm p=0.0000  CONFIRMED
+  n=10 accuracy>1/n      p=0.0000  Holm p=0.0000  CONFIRMED
+  n=10 LDA EER<0.5       p=0.0000  Holm p=0.0000  CONFIRMED
+  n=20 accuracy>1/n      p=0.0000  Holm p=0.0000  CONFIRMED
+  n=20 LDA EER<0.5       p=0.0000  Holm p=0.0000  CONFIRMED
+  n=40 accuracy>1/n      p=0.0000  Holm p=0.0000  CONFIRMED
+  n=40 LDA EER<0.5       p=0.0000  Holm p=0.0000  CONFIRMED
+  n=64 accuracy>1/n      p=0.0000  Holm p=0.0000  CONFIRMED
+  n=64 LDA EER<0.5       p=0.0000  Holm p=0.0000  CONFIRMED
+
+H2 overall: CONFIRMED
+
+saved results/scaling_curve.json

@@ -1,0 +1,131 @@
+  [1/85] S001: 84 windows from 14 runs
+  [2/85] S003: 84 windows from 14 runs
+  [3/85] S004: 84 windows from 14 runs
+  [4/85] S007: 84 windows from 14 runs
+  [5/85] S008: 84 windows from 14 runs
+  [6/85] S009: 84 windows from 14 runs
+  [7/85] S010: 84 windows from 14 runs
+  [8/85] S011: 84 windows from 14 runs
+  [9/85] S013: 84 windows from 14 runs
+  [10/85] S014: 84 windows from 14 runs
+  [11/85] S015: 84 windows from 14 runs
+  [12/85] S016: 84 windows from 14 runs
+  [13/85] S018: 84 windows from 14 runs
+  [14/85] S020: 84 windows from 14 runs
+  [15/85] S021: 84 windows from 14 runs
+  [16/85] S023: 84 windows from 14 runs
+  [17/85] S025: 84 windows from 14 runs
+  [18/85] S026: 84 windows from 14 runs
+  [19/85] S027: 84 windows from 14 runs
+  [20/85] S028: 84 windows from 14 runs
+  [21/85] S030: 84 windows from 14 runs
+  [22/85] S031: 84 windows from 14 runs
+  [23/85] S033: 84 windows from 14 runs
+  [24/85] S034: 84 windows from 14 runs
+  [25/85] S035: 84 windows from 14 runs
+  [26/85] S036: 84 windows from 14 runs
+  [27/85] S037: 84 windows from 14 runs
+  [28/85] S039: 84 windows from 14 runs
+  [29/85] S041: 84 windows from 14 runs
+  [30/85] S042: 84 windows from 14 runs
+  [31/85] S043: 84 windows from 14 runs
+  [32/85] S044: 84 windows from 14 runs
+  [33/85] S045: 84 windows from 14 runs
+  [34/85] S046: 84 windows from 14 runs
+  [35/85] S047: 84 windows from 14 runs
+  [36/85] S048: 84 windows from 14 runs
+  [37/85] S049: 84 windows from 14 runs
+  [38/85] S050: 84 windows from 14 runs
+  [39/85] S051: 84 windows from 14 runs
+  [40/85] S052: 84 windows from 14 runs
+  [41/85] S053: 84 windows from 14 runs
+  [42/85] S054: 84 windows from 14 runs
+  [43/85] S055: 84 windows from 14 runs
+  [44/85] S056: 84 windows from 14 runs
+  [45/85] S057: 84 windows from 14 runs
+  [46/85] S058: 84 windows from 14 runs
+  [47/85] S059: 84 windows from 14 runs
+  [48/85] S060: 84 windows from 14 runs
+  [49/85] S061: 84 windows from 14 runs
+  [50/85] S062: 84 windows from 14 runs
+  [51/85] S063: 84 windows from 14 runs
+  [52/85] S064: 84 windows from 14 runs
+  [53/85] S065: 84 windows from 14 runs
+  [54/85] S068: 84 windows from 14 runs
+  [55/85] S069: 84 windows from 14 runs
+  [56/85] S070: 84 windows from 14 runs
+  [57/85] S071: 84 windows from 14 runs
+  [58/85] S072: 84 windows from 14 runs
+  [59/85] S073: 84 windows from 14 runs
+  [60/85] S074: 84 windows from 14 runs
+  [61/85] S075: 84 windows from 14 runs
+  [62/85] S076: 84 windows from 14 runs
+  [63/85] S077: 84 windows from 14 runs
+  [64/85] S078: 84 windows from 14 runs
+  [65/85] S082: 84 windows from 14 runs
+  [66/85] S084: 84 windows from 14 runs
+  [67/85] S085: 84 windows from 14 runs
+  [68/85] S086: 84 windows from 14 runs
+  [69/85] S087: 84 windows from 14 runs
+  [70/85] S089: 84 windows from 14 runs
+  [71/85] S090: 84 windows from 14 runs
+  [72/85] S091: 84 windows from 14 runs
+  [74/85] S093: 84 windows from 14 runs
+  [75/85] S094: 84 windows from 14 runs
+  [76/85] S095: 84 windows from 14 runs
+  [77/85] S097: 84 windows from 14 runs
+  [78/85] S098: 84 windows from 14 runs
+  [79/85] S101: 84 windows from 14 runs
+  [80/85] S103: 84 windows from 14 runs
+  [81/85] S104: 84 windows from 14 runs
+  [82/85] S105: 84 windows from 14 runs
+  [83/85] S106: 84 windows from 14 runs
+  [84/85] S107: 84 windows from 14 runs
+  [85/85] S109: 84 windows from 14 runs
+data: 7056 recordings, 84 people (chance 0.012), sampling rate 80 Hz
+
+seed 0: all features, linear probe: accuracy 0.959
+seed 1: all features, linear probe: accuracy 0.964
+seed 2: all features, linear probe: accuracy 0.960
+seed 3: all features, linear probe: accuracy 0.962
+seed 4: all features, linear probe: accuracy 0.957
+
+== accuracy [95% CI over seeds]; chance = 0.012 ==
+setting                           cols                    linear                   LDA EER
+all features                       512      0.960 [0.957, 0.964]      0.084 [0.070, 0.098]
+only rms                            64      0.863 [0.858, 0.868]      0.168 [0.156, 0.180]
+only delta                          64      0.796 [0.788, 0.804]      0.218 [0.202, 0.234]
+only theta                          64      0.832 [0.826, 0.838]      0.171 [0.161, 0.180]
+only alpha                          64      0.830 [0.825, 0.836]      0.153 [0.148, 0.158]
+only beta                           64      0.937 [0.924, 0.950]      0.082 [0.074, 0.090]
+only gamma                          64      0.903 [0.894, 0.913]      0.122 [0.115, 0.129]
+only alpha_peak                    128      0.620 [0.612, 0.627]      0.228 [0.221, 0.235]
+all minus rms                      448      0.954 [0.951, 0.957]      0.083 [0.070, 0.097]
+all minus delta                    448      0.956 [0.954, 0.958]      0.082 [0.069, 0.095]
+all minus theta                    448      0.956 [0.952, 0.959]      0.084 [0.071, 0.098]
+all minus alpha                    448      0.960 [0.957, 0.963]      0.084 [0.071, 0.097]
+all minus beta                     448      0.950 [0.947, 0.954]      0.103 [0.091, 0.115]
+all minus gamma                    448      0.949 [0.946, 0.953]      0.088 [0.073, 0.103]
+all minus alpha_peak               384      0.969 [0.966, 0.972]      0.079 [0.065, 0.093]
+control: amplitude-normalised      512      0.854 [0.849, 0.859]      0.183 [0.176, 0.191]
+control: edges trimmed 10%         512      0.955 [0.951, 0.958]      0.090 [0.076, 0.104]
+control: normalised + trimmed      512      0.868 [0.862, 0.875]      0.197 [0.187, 0.207]
+
+== leakage lost when a group is removed (excess of 'all' minus excess of 'all minus X'; > 0 = the group mattered) ==
+  rms          linear: +0.006 [+0.003, +0.009]
+  delta        linear: +0.004 [+0.002, +0.006]
+  theta        linear: +0.005 [+0.003, +0.006]
+  alpha        linear: +0.000 [-0.002, +0.003]
+  beta         linear: +0.010 [+0.008, +0.011]
+  gamma        linear: +0.011 [+0.010, +0.012]
+  alpha_peak   linear: -0.009 [-0.010, -0.007]
+
+== mean single-channel excess over chance by scalp region (linear probe) ==
+  occipital  +0.374  (9 channels)
+  parietal   +0.363  (16 channels)
+  central    +0.340  (14 channels)
+  temporal   +0.336  (8 channels)
+  frontal    +0.285  (17 channels)
+  strongest single channels: Iz.. (+0.413), Oz.. (+0.379), Po3. (+0.378), C4.. (+0.378), O1.. (+0.376)
+
+saved results/feature_ablation.json

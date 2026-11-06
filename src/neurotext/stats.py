@@ -43,3 +43,26 @@ def verdict(ci: dict[str, float], higher_is_better: bool = True) -> str:
     if hi < 0:
         return "worse" if higher_is_better else "better"
     return "no evidence of a difference"
+
+
+def one_sided_p(values, null: float = 0.0, alternative: str = "greater") -> float:
+    """One-sided t-test p-value that the mean of `values` differs from `null` in the stated direction
+    ("greater" or "less"). Seeds are the replicates, so this is optimistic on a fixed real dataset
+    (see the module note); report it together with the interval, not instead of it."""
+    v = np.asarray(values, dtype=float) - null
+    if len(v) < 2:
+        return float("nan")
+    if np.allclose(v, v[0]):  # zero spread: the t statistic is undefined
+        return 0.0 if (v[0] > 0) == (alternative == "greater") and v[0] != 0 else 1.0
+    return float(stats.ttest_1samp(v, 0.0, alternative=alternative).pvalue)
+
+
+def holm(pvalues: dict[str, float]) -> dict[str, float]:
+    """Holm-Bonferroni adjusted p-values for a family of tests (NaN stays NaN and is not counted)."""
+    items = [(k, p) for k, p in pvalues.items() if not np.isnan(p)]
+    items.sort(key=lambda kv: kv[1])
+    m, adj, running = len(items), {}, 0.0
+    for rank, (k, p) in enumerate(items):
+        running = max(running, min(1.0, (m - rank) * p))
+        adj[k] = running
+    return {k: adj.get(k, float("nan")) for k in pvalues}

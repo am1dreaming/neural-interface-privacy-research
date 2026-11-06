@@ -141,3 +141,23 @@ def test_default_split_is_unchanged_by_the_new_option():
 def test_block_size_must_be_positive():
     with pytest.raises(ValueError):
         sentence_split(np.arange(30), block_size=0)
+
+
+def test_fixed_test_subjects_are_honoured_and_leak_nothing():
+    import numpy as np
+
+    from neurotext.data import check_no_leakage, subject_and_sentence_split
+
+    subj = np.repeat(np.arange(20), 14)
+    sent = np.tile(np.arange(14), 20)
+    fixed = [3, 11, 17]
+    a = subject_and_sentence_split(subj, sent, seed=2, test_subjects=fixed)
+    b = subject_and_sentence_split(subj, sent, seed=2, test_subjects=fixed)
+    assert list(a.groups["test_subjects"]) == fixed
+    check_no_leakage(a, subj, sent)
+    assert np.array_equal(a.train, b.train) and np.array_equal(a.test, b.test)
+    other = subject_and_sentence_split(subj, sent, seed=3, test_subjects=fixed)
+    assert list(other.groups["test_subjects"]) == fixed
+    assert not np.array_equal(a.groups["train_subjects"], other.groups["train_subjects"])
+    with pytest.raises(ValueError, match="not in the data"):
+        subject_and_sentence_split(subj, sent, test_subjects=[99])
