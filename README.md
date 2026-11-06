@@ -2,6 +2,8 @@
 
 *EEG decoding, identity leakage, and the cost of defences.*
 
+**Project site: [am1dreaming.github.io/neural-interface-privacy-research](https://am1dreaming.github.io/neural-interface-privacy-research/)** — the findings, charts and pre-registered tests on one page.
+
 Open ML and cybersecurity research: can a sentence be decoded from non-invasive EEG, do the embeddings of such a decoder reveal who the person is, and what do defences cost? Status as of 6 November 2026. Development results and the one-shot held-out evaluation are both in (see "Extended audit").
 
 ## Key findings
