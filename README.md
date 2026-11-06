@@ -2,7 +2,7 @@
 
 *EEG decoding, identity leakage, and the cost of defences.*
 
-Open ML and cybersecurity research: can a sentence be decoded from non-invasive EEG, do the embeddings of such a decoder reveal who the person is, and what do defences cost? Status as of 6 November 2026. Results on the development group are in; the one-shot final evaluation on held-out people has **not** been run yet (see "Extended audit").
+Open ML and cybersecurity research: can a sentence be decoded from non-invasive EEG, do the embeddings of such a decoder reveal who the person is, and what do defences cost? Status as of 6 November 2026. Development results and the one-shot held-out evaluation are both in (see "Extended audit").
 
 ## Key findings
 
@@ -105,9 +105,11 @@ The base model is frozen and a light adapter is trained per person (channel scal
 - A single run is too noisy for comparisons: a small test shifts top-1 by several points. For conclusions use `run_seeds.py`. The same seed gives the same result (checked by a test).
 - Quantisation: standard PyTorch builds for macOS lack the needed engine, so the int8 size cannot be measured. In that case `quantized_size_bytes` returns `None`, and `estimate_int8_linear_bytes` gives an analytical estimate (on Linux it differs from the measurement by about 6%).
 
-## Extended audit (development results; final held-out run pending)
+## Extended audit (development results and the one-shot held-out evaluation)
 
-`PREREGISTRATION.md` fixes the hypotheses, metrics, the held-out group and the multiple-comparison rule. Two groups of people are used on EEGMMIDB (109 people, 64 channels, no text): 85 development people (84 usable) and 24 held-out people (22 usable) that are touched **once**, at the very end (`experiments/final_holdout.py`). Everything below is on ZuCo or on the development group. Confirmatory and exploratory results are kept apart.
+`PREREGISTRATION.md` fixes the hypotheses, metrics, the held-out group and the multiple-comparison rule. Two groups of people are used on EEGMMIDB (109 people, 64 channels, no text): 85 development people (84 usable) and 24 held-out people (22 usable) that were evaluated **once**, at the very end (`experiments/final_holdout.py`, code and `PREREGISTRATION.md` committed as `d6587c0` before the run). Sections 6–8 are on ZuCo or on the development group; section 9 is the held-out evaluation. Confirmatory and exploratory results are kept apart.
+
+**Timing, stated plainly.** `PREREGISTRATION.md` was written on 5 November 2026 at 21:31 UTC (file time), before the 10-seed runs for H2, H4 and the ablation; its hypotheses were not edited afterwards (a dated addendum about this timing was appended on 7 November). But the first commit that contains it (`d6587c0`) was made on 6 November (UTC), *after* those runs. So for H2 and H4 the order "plan, then results" rests on a local file time and is not externally verifiable. Only family A (H1, H3, section 9) was run provably after the commit.
 
 EEGMMIDB has no text, so only the leakage side is tested there: the encoder is aligned with an embedding of the instructed run type (plus a random per-run component), so "trained encoder" on this dataset is **not** a text decoder. Decoding quality is neither measured nor claimed.
 
@@ -123,7 +125,7 @@ Encoder trained on 20 people, attacker evaluated on people the encoder never saw
 | Untrained encoder (linear) | 0.448 | 0.299 | 0.212 | 0.134 | 0.104 |
 | Trained encoder (linear) | 0.406 | 0.259 | 0.183 | 0.115 | 0.086 |
 
-Open-set verification (LDA score fitted on *other* people; EER, 0.5 = chance): spectral features 0.064 → 0.127 from n=5 to n=64, PCA-32 about 0.16, trained encoder 0.465–0.470, untrained encoder 0.452–0.455.
+Open-set verification (LDA score fitted on *other* people; EER, 0.5 = chance): spectral features 0.064 → 0.127 from n=5 to n=64, PCA-32 about 0.16, trained encoder 0.462–0.470, untrained encoder 0.452–0.455.
 
 ![Identification and verification against the number of people](results/fig2_scaling_curve.png)
 
@@ -179,14 +181,44 @@ Open-set verification (LDA score fitted on *other* people; EER, 0.5 = chance): s
 - Per-person adapters: no benefit shown (section 4).
 - The individual alpha peak as an identity carrier: much weaker than band power, and not needed.
 - Learned-encoder training as the source of the leak: it is not (sections 2, 6, 7).
+- Embedding size (4 to 64): planned as exploratory in the pre-registration, not run.
+- H3b: whether an MLP recovers identity after nulling 32 directions remains open (section 9).
 
 ### Threat model in one paragraph
 
 An attacker who holds reference recordings of the people and gets either raw EEG, its spectral features, or an embedding from any encoder tested here can name the person well above chance. The strongest channel is the spectral features themselves (96.5% among 64 people, EER 0.06–0.13). Embeddings from a small encoder leak much less, and in an open-set "same person or not" setting for unseen people they are close to chance (EER 0.45–0.50) except for the CNN on ZuCo. This is within one recording session; cross-day stability is untested. Defences that act on the embedding do not address leakage from the raw signal.
 
-### Final held-out evaluation (H1, H3) — not run yet
+### 9. Final held-out evaluation (22 new people, 10 seeds) — confirmatory (H1, H3)
 
-`experiments/final_holdout.py` evaluates the 22 held-out people exactly once. The guard in `neurotext/audit.py` refuses a second run and logs reruns in `results/deviations.log`. This section will be filled in after that run.
+The encoder is trained on the 84 development people; the attacker is then evaluated on 22 held-out people the encoder has never seen (chance 1/22 = 0.045). One run, no reruns (`results/log_final.txt`, no entry in `results/deviations.log`).
+
+| Pre-registered test (family A, Holm over 6) | Estimate [95% CI] | Verdict |
+|---|---|---|
+| H1 linear probe accuracy > chance | 0.163 [0.148, 0.177] | **confirmed** |
+| H1 MLP probe accuracy > chance | 0.126 [0.114, 0.138] | **confirmed** |
+| H1 cosine EER < 0.5 | 0.478 [0.471, 0.484] | **confirmed** |
+| H1 LDA EER < 0.5 | 0.464 [0.459, 0.469] | **confirmed** |
+| H3a identity-nulling (m=32) lowers the linear probe | −0.109 [−0.121, −0.097] | **confirmed** |
+| H3b MLP stays above chance under identity-nulling (m=32) | 0.048 [0.045, 0.051] vs 0.045 | **not confirmed** (Holm p = 0.056); by the pre-registered rule also not refuted, since the point estimate is above chance |
+
+- **The leakage replicates on people the model never saw**: about 3.6× chance for the linear probe, similar to the development result for 20 people (0.183 [0.166, 0.200]; there the encoder was trained on 20 people, here on 84, so the two are not a like-for-like comparison). Verification is weaker (EER 0.46–0.48), as in every earlier setting.
+- **H3b failed.** After removing 32 identity directions the MLP is at 0.048 against a chance of 0.045; we cannot claim it is above chance, but the interval also does not exclude a small residue. So on this data, subtracting enough identity directions removed almost everything, including for a non-linear attacker. This differs from the synthetic data (section 3), where subtraction of 8 directions did not stop the MLP. The two settings differ in the number of directions, the data and the encoder, so this is not a contradiction, but it means the section-3 conclusion should not be generalised.
+
+Exploratory (outside the pre-registered family): all defences on the same held-out people.
+
+| Defence | Linear | MLP | LDA EER |
+|---|---|---|---|
+| none | 0.163 | 0.126 | 0.464 |
+| noise, norm 0.5 | 0.092 | 0.078 | 0.484 |
+| noise, norm 1.0 | 0.075 | 0.066 | 0.490 |
+| PCA, 4 directions | 0.083 | 0.074 | 0.482 |
+| PCA, 8 directions | 0.114 | 0.092 | 0.471 |
+| identity-nulling, m=8 | 0.105 | 0.092 | 0.482 |
+| identity-nulling, m=32 | 0.054 | 0.048 | 0.498 |
+| adversarial, weight 1.0 | 0.146 | 0.114 | 0.469 |
+
+- Adversarial training barely helps (0.163 → 0.146), consistent with section 3.
+- **These defences are measured on the privacy side only.** EEGMMIDB has no text, so there is no decoder whose accuracy could be traded off. Their price (section 3) is untested on this data, and a defence that wipes the embedding would score best here.
 
 ```bash
 python data/download_eegmmidb.py                                                    # ~2 GB, resumable
@@ -194,7 +226,7 @@ python experiments/encoder_robustness.py --config configs/zuco2_nr.yaml --seeds 
 python experiments/scaling_curve.py --config configs/eegmmidb.yaml --seeds 10
 python experiments/feature_ablation.py --config configs/eegmmidb.yaml --seeds 5 --probes linear --channels
 python experiments/make_plots.py                                                    # every figure that has results
-python experiments/final_holdout.py --config configs/eegmmidb_final.yaml --seeds 10 # ONCE, last
+python experiments/final_holdout.py --config configs/eegmmidb_final.yaml --seeds 10 # ONCE, last (done)
 # pipeline check without any data (synthetic, not a result):
 python experiments/scaling_curve.py --config configs/audit_synthetic.yaml --seeds 3 --n-list 3 5 8 --n-train 10 --epochs 3
 ```
@@ -204,7 +236,7 @@ python experiments/scaling_curve.py --config configs/audit_synthetic.yaml --seed
 - Identity leakage was measured within a single session (one recording per person), on ZuCo and on EEGMMIDB. For another day accuracy may be noticeably lower. Absolute power can carry a fingerprint of the session and equipment rather than of the brain; the amplitude-normalised control keeps 0.85, which is a partial check only.
 - There are 4 new people in the test on real data and 6 on synthetic. Seeds change initialisation and the choice of "new people" but not the data, so intervals over seeds are a lower bound.
 - Defences were tested on synthetic data only.
-- Open-set verification was measured on ZuCo (encoders) and on the EEGMMIDB development group. The held-out result is pending.
+- Open-set verification was measured on ZuCo (encoders), on the EEGMMIDB development group and on the 22 held-out people.
 - On EEGMMIDB the encoder target is synthetic (run type), so "trained encoder" results there say little about a real text decoder.
 - Seeds are not independent replicates on a fixed dataset; all intervals over seeds are a lower bound on the uncertainty.
 - Decoding results apply to sentence-averaged features and to TF-IDF as the text encoder.

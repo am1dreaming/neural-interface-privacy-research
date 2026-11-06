@@ -1,0 +1,142 @@
+  [1/109] S001: 84 windows from 14 runs
+  [2/109] S002: 84 windows from 14 runs
+  [3/109] S003: 84 windows from 14 runs
+  [4/109] S004: 84 windows from 14 runs
+  [5/109] S005: 84 windows from 14 runs
+  [6/109] S006: 84 windows from 14 runs
+  [7/109] S007: 84 windows from 14 runs
+  [8/109] S008: 84 windows from 14 runs
+  [9/109] S009: 84 windows from 14 runs
+  [10/109] S010: 84 windows from 14 runs
+  [11/109] S011: 84 windows from 14 runs
+  [12/109] S012: 84 windows from 14 runs
+  [13/109] S013: 84 windows from 14 runs
+  [14/109] S014: 84 windows from 14 runs
+  [15/109] S015: 84 windows from 14 runs
+  [16/109] S016: 84 windows from 14 runs
+  [17/109] S017: 84 windows from 14 runs
+  [18/109] S018: 84 windows from 14 runs
+  [19/109] S019: 84 windows from 14 runs
+  [20/109] S020: 84 windows from 14 runs
+  [21/109] S021: 84 windows from 14 runs
+  [22/109] S022: 84 windows from 14 runs
+  [23/109] S023: 84 windows from 14 runs
+  [24/109] S024: 84 windows from 14 runs
+  [25/109] S025: 84 windows from 14 runs
+  [26/109] S026: 84 windows from 14 runs
+  [27/109] S027: 84 windows from 14 runs
+  [28/109] S028: 84 windows from 14 runs
+  [29/109] S029: 84 windows from 14 runs
+  [30/109] S030: 84 windows from 14 runs
+  [31/109] S031: 84 windows from 14 runs
+  [32/109] S032: 84 windows from 14 runs
+  [33/109] S033: 84 windows from 14 runs
+  [34/109] S034: 84 windows from 14 runs
+  [35/109] S035: 84 windows from 14 runs
+  [36/109] S036: 84 windows from 14 runs
+  [37/109] S037: 84 windows from 14 runs
+  [38/109] S038: 84 windows from 14 runs
+  [39/109] S039: 84 windows from 14 runs
+  [40/109] S040: 84 windows from 14 runs
+  [41/109] S041: 84 windows from 14 runs
+  [42/109] S042: 84 windows from 14 runs
+  [43/109] S043: 84 windows from 14 runs
+  [44/109] S044: 84 windows from 14 runs
+  [45/109] S045: 84 windows from 14 runs
+  [46/109] S046: 84 windows from 14 runs
+  [47/109] S047: 84 windows from 14 runs
+  [48/109] S048: 84 windows from 14 runs
+  [49/109] S049: 84 windows from 14 runs
+  [50/109] S050: 84 windows from 14 runs
+  [51/109] S051: 84 windows from 14 runs
+  [52/109] S052: 84 windows from 14 runs
+  [53/109] S053: 84 windows from 14 runs
+  [54/109] S054: 84 windows from 14 runs
+  [55/109] S055: 84 windows from 14 runs
+  [56/109] S056: 84 windows from 14 runs
+  [57/109] S057: 84 windows from 14 runs
+  [58/109] S058: 84 windows from 14 runs
+  [59/109] S059: 84 windows from 14 runs
+  [60/109] S060: 84 windows from 14 runs
+  [61/109] S061: 84 windows from 14 runs
+  [62/109] S062: 84 windows from 14 runs
+  [63/109] S063: 84 windows from 14 runs
+  [64/109] S064: 84 windows from 14 runs
+  [65/109] S065: 84 windows from 14 runs
+  [66/109] S066: 84 windows from 14 runs
+  [67/109] S067: 84 windows from 14 runs
+  [68/109] S068: 84 windows from 14 runs
+  [69/109] S069: 84 windows from 14 runs
+  [70/109] S070: 84 windows from 14 runs
+  [71/109] S071: 84 windows from 14 runs
+  [72/109] S072: 84 windows from 14 runs
+  [73/109] S073: 84 windows from 14 runs
+  [74/109] S074: 84 windows from 14 runs
+  [75/109] S075: 84 windows from 14 runs
+  [76/109] S076: 84 windows from 14 runs
+  [77/109] S077: 84 windows from 14 runs
+  [78/109] S078: 84 windows from 14 runs
+  [79/109] S079: 84 windows from 14 runs
+  [80/109] S080: 84 windows from 14 runs
+  [81/109] S081: 84 windows from 14 runs
+  [82/109] S082: 84 windows from 14 runs
+  [83/109] S083: 84 windows from 14 runs
+  [84/109] S084: 84 windows from 14 runs
+  [85/109] S085: 84 windows from 14 runs
+  [86/109] S086: 84 windows from 14 runs
+  [87/109] S087: 84 windows from 14 runs
+  [89/109] S089: 84 windows from 14 runs
+  [90/109] S090: 84 windows from 14 runs
+  [91/109] S091: 84 windows from 14 runs
+  [93/109] S093: 84 windows from 14 runs
+  [94/109] S094: 84 windows from 14 runs
+  [95/109] S095: 84 windows from 14 runs
+  [96/109] S096: 84 windows from 14 runs
+  [97/109] S097: 84 windows from 14 runs
+  [98/109] S098: 84 windows from 14 runs
+  [99/109] S099: 84 windows from 14 runs
+  [101/109] S101: 84 windows from 14 runs
+  [102/109] S102: 84 windows from 14 runs
+  [103/109] S103: 84 windows from 14 runs
+  [104/109] S104: 84 windows from 14 runs
+  [105/109] S105: 84 windows from 14 runs
+  [106/109] S106: 84 windows from 14 runs
+  [107/109] S107: 84 windows from 14 runs
+  [108/109] S108: 84 windows from 14 runs
+  [109/109] S109: 84 windows from 14 runs
+held-out people used as NEW people: 22 (S002, S005, S006, S012, S017, S019, S022, S024, S029, S032, S038, S040, S066, S067, S079, S080, S081, S083, S096, S099, S102, S108)
+development people (train/val): 84
+
+seed 0: no defence, linear probe accuracy 0.176 (chance 0.045)
+seed 1: no defence, linear probe accuracy 0.170 (chance 0.045)
+seed 2: no defence, linear probe accuracy 0.185 (chance 0.045)
+seed 3: no defence, linear probe accuracy 0.156 (chance 0.045)
+seed 4: no defence, linear probe accuracy 0.158 (chance 0.045)
+seed 5: no defence, linear probe accuracy 0.134 (chance 0.045)
+seed 6: no defence, linear probe accuracy 0.170 (chance 0.045)
+seed 7: no defence, linear probe accuracy 0.194 (chance 0.045)
+seed 8: no defence, linear probe accuracy 0.144 (chance 0.045)
+seed 9: no defence, linear probe accuracy 0.139 (chance 0.045)
+
+== confirmatory family A: one-sided t-tests over 10 seeds, Holm-adjusted ==
+test                                                 estimate [95% CI]    null        p   Holm p  verdict
+H1 linear accuracy > 1/n                          0.163 [0.148, 0.177]   0.045   0.0000   0.0000  CONFIRMED
+H1 mlp accuracy > 1/n                             0.126 [0.114, 0.138]   0.045   0.0000   0.0000  CONFIRMED
+H1 cosine EER < 0.5                               0.478 [0.471, 0.484]   0.500   0.0000   0.0000  CONFIRMED
+H1 lda EER < 0.5                                  0.464 [0.459, 0.469]   0.500   0.0000   0.0000  CONFIRMED
+H3a linear: id-null minus none < 0             -0.109 [-0.121, -0.097]   0.000   0.0000   0.0000  CONFIRMED
+H3b mlp under id-null > 1/n                       0.048 [0.045, 0.051]   0.045   0.0556   0.0556  NOT confirmed
+
+== all defences, new (held-out) people: accuracy, EER, and paired change against no defence ==
+  none                  linear: 0.163 [0.148, 0.177]  mlp: 0.126 [0.114, 0.138]  LDA EER: 0.464 [0.459, 0.469]
+  noise s=0.5           linear: 0.092 [0.084, 0.101]  mlp: 0.078 [0.071, 0.085]  LDA EER: 0.484 [0.481, 0.488]
+  noise s=1.0           linear: 0.075 [0.068, 0.082]  mlp: 0.066 [0.061, 0.071]  LDA EER: 0.490 [0.487, 0.493]
+  pca k=4               linear: 0.083 [0.075, 0.090]  mlp: 0.074 [0.067, 0.081]  LDA EER: 0.482 [0.476, 0.488]
+  pca k=8               linear: 0.114 [0.100, 0.129]  mlp: 0.092 [0.083, 0.102]  LDA EER: 0.471 [0.464, 0.477]
+  id-null m=8           linear: 0.105 [0.097, 0.113]  mlp: 0.092 [0.088, 0.096]  LDA EER: 0.482 [0.480, 0.483]
+  id-null m=32          linear: 0.054 [0.048, 0.059]  mlp: 0.048 [0.045, 0.051]  LDA EER: 0.498 [0.496, 0.500]
+  adversarial l=1.0     linear: 0.146 [0.137, 0.154]  mlp: 0.114 [0.104, 0.123]  LDA EER: 0.469 [0.467, 0.472]
+
+Exploratory (not in the pre-registered family): everything in this last table except the tests above.
+
+saved results/final_holdout.json

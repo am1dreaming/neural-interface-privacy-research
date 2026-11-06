@@ -132,3 +132,9 @@ confirmatory analysis, and they limit how blind the hypotheses are:
   was never a hypothesis here and stays exploratory.
 
 Deviations from the plan after the commit: none so far.
+
+Addendum, 7 November 2026 (written after the held-out run; the text above is unchanged): the list above is
+incomplete with respect to the commit. The 10-seed runs for H4 (`encoder_robustness.py`, 5 November, UTC), H2
+(`scaling_curve.py`, 6 November, UTC) and the exploratory ablation were made after this file was written but
+**before** its first commit (`d6587c0`, 6 November). The hypotheses were not changed after those runs, but
+this can only be shown by the local file time. The held-out run (H1, H3) came after the commit and had no reruns.

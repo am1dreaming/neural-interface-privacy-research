@@ -109,7 +109,7 @@ def fig1_leakage(results: Path, out: Path):
         _hline(ax, body["chance"], bi("chance", "шанс") + f" {body['chance']:.2f}")
         ax.set_title(titles.get(pop, pop))
         ax.set_ylabel(bi("attacker accuracy", "точность атакующего"))
-        ax.legend(loc="lower left")
+        ax.legend(loc="upper left")
     fig.suptitle(bi("Identity leaks from the representations (95% CI over seeds)",
                     "Личность утекает из представлений (95% ДИ по сидам)"))
     return _save(fig, out / "fig1_leakage_vs_chance.png")
@@ -205,8 +205,9 @@ def fig3_tradeoff(results: Path, out: Path):
             ax.set_ylim(0, 1.0)
         ax.set_xlim(0, None)
         ax.set_xlabel(bi("decoder top-1 (utility)", "точность декодера top-1 (полезность)"))
-    fig.suptitle(bi("Price of privacy: best defence is low-right of the cloud in leakage, right in utility",
-                    "Цена защиты: чем левее-ниже по утечке и правее по полезности, тем лучше"), fontsize=10)
+    fig.suptitle("Price of privacy: best defence is bottom-right (little leakage, high utility); dashed = attacker chance, dotted = decoder chance\n"
+                 "Цена защиты: лучшая справа внизу (мало утечки, высокая полезность); штрих = шанс атакующего, точки = шанс декодера",
+                 fontsize=9)
     return _save(fig, out / "fig3_defence_tradeoff.png")
 
 
@@ -255,7 +256,11 @@ def fig5_encoders(results: Path, out: Path):
     dims = sorted({v["out_dim"] for v in enc.values()})
     ref_dim = 32 if 32 in dims else dims[-1]
     names = sorted({v["encoder"] for v in enc.values()})
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 4.6))
+    if len(dims) > 1:
+        fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 4.6))
+    else:  # embedding-size sweep not run: one panel only
+        fig, a1 = plt.subplots(1, 1, figsize=(6.5, 4.6))
+        a2 = None
     w = 0.8 / len(probes)
     labels = [n for n in names if f"{n}-{ref_dim}" in enc]
     for k, p in enumerate(probes):
@@ -264,7 +269,7 @@ def fig5_encoders(results: Path, out: Path):
     chance = enc[f"{labels[0]}-{ref_dim}"]["trained"][probes[0]]["chance"]
     a1.set_ylim(0, 1.05)
     _hline(a1, chance, bi("chance", "шанс") + f" {chance:.2f}")
-    a1.set_title(bi(f"four encoders, {ref_dim}-d, new people", f"четыре энкодера, {ref_dim}-мерные, новые люди"))
+    a1.set_title(bi(f"four encoders, {ref_dim}-d, new people", f"четыре энкодера, {ref_dim}-мерные, новые люди"), fontsize=10)
     a1.set_ylabel(bi("attacker accuracy", "точность атакующего"))
     a1.legend(loc="lower left")
     if len(dims) > 1:
@@ -283,12 +288,8 @@ def fig5_encoders(results: Path, out: Path):
         a2.set_ylabel(bi(f"attacker accuracy ({probes[-1]})", f"точность атакующего ({probes[-1]})"))
         a2.set_title(bi("leakage against embedding size", "утечка и размер эмбеддинга"))
         a2.legend(fontsize=8)
-    else:
-        a2.axis("off")
-        a2.text(0.5, 0.5, bi("run with --out-dims 4 8 16 32 64\nfor the embedding-size panel",
-                             "запустите с --out-dims 4 8 16 32 64\nдля панели про размер эмбеддинга"), ha="center", va="center")
     fig.suptitle(bi("Is the leakage specific to one architecture? (95% CI over seeds)",
-                    "Утечка зависит от архитектуры? (95% ДИ по сидам)"))
+                    "Утечка зависит от архитектуры? (95% ДИ по сидам)"), fontsize=10 if a2 is None else 12)
     _table(enc, probes, out / "encoders_table.md")
     return _save(fig, out / "fig5_encoders.png")
 
