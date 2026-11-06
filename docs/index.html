@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neural Interface Privacy Lab — EEG identity-leakage audit</title>
+<meta name="description" content="An open reproducible audit with controls: non-invasive EEG-to-text decoding sits at chance, while identity leaks from the signal itself.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f7f5;--ink:#111111;--dot:#0d0d0d;--mute:#9a9a9a;--sub:#7b7b7b;--body:#3a3a3a;--grey:#b0b0ae;
+  --blur:10px;--glass:rgba(255,255,255,.44);--glass-edge:rgba(255,255,255,.78);
+  --r:22px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1,"cv11" 1;overflow-x:hidden}
+a{color:inherit}
+::selection{background:#111;color:#fff}
+
+/* ---------- liquid glass (same recipe as the Live-Lyrics highlight: light tint + 10px backdrop blur) */
+.glass{position:relative;isolation:isolate;background:var(--glass);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(1.25);backdrop-filter:blur(var(--blur)) saturate(1.25);
+  border:1px solid var(--glass-edge);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(17,17,17,.035),
+             0 12px 32px -14px rgba(17,17,17,.16),0 2px 6px -2px rgba(17,17,17,.05)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;
+  background:linear-gradient(180deg,rgba(255,255,255,.6) 0%,rgba(255,255,255,0) 42%)}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;opacity:.028;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- ambient dots behind everything below the hero */
+#ambient{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;pointer-events:none}
+
+/* ---------- nav */
+nav.glass{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;
+  gap:clamp(14px,2vw,30px);padding:7px 7px 7px 18px;border-radius:999px;font-size:13.5px;white-space:nowrap}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;letter-spacing:-.01em;text-decoration:none;margin-right:6px}
+.links{display:flex;gap:clamp(14px,2vw,28px)}
+.links a{color:#3a3a3a;text-decoration:none;transition:color .2s}
+.links a:hover,.links a.cur{color:#000}
+.seg{display:inline-flex;padding:3px;border-radius:999px;gap:2px}
+.seg button{all:unset;cursor:pointer;font-size:12.5px;font-weight:500;padding:6px 11px;border-radius:999px;color:#6b6b6b;transition:background .25s,color .25s}
+.seg button[aria-pressed="true"]{background:#111;color:#fff}
+.seg button:focus-visible{outline:2px solid #111;outline-offset:2px}
+.pill{background:#111;color:#fff;text-decoration:none;padding:10px 19px;border-radius:999px;font-weight:500;transition:transform .25s}
+.pill:hover{transform:translateY(-1px)}
+
+/* ---------- hero */
+.hero{position:relative;height:100vh;min-height:660px;overflow:hidden;background:transparent;z-index:2}
+.copy::before{content:"";position:absolute;inset:-12% -10% -14% -14%;z-index:-1;pointer-events:none;background:radial-gradient(60% 60% at 40% 55%,rgba(247,247,245,.92),rgba(247,247,245,.6) 55%,rgba(247,247,245,0) 80%)}
+#dots{position:absolute;inset:0;width:100%;height:100%;display:block}
+.copy{position:absolute;left:clamp(22px,6vw,96px);bottom:clamp(96px,15vh,150px);text-align:left;width:max-content;max-width:90vw;z-index:3;pointer-events:none}
+.copy a{pointer-events:auto}
+h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;letter-spacing:-.012em;line-height:.94;font-size:clamp(44px,4.6vw,86px)}
+h1 b{font-weight:400}h1 i{font-style:italic}
+h1 span,h2 span{display:block;color:var(--mute)}
+.copy p{margin:22px 0 0;max-width:460px;color:var(--sub);font-size:clamp(13px,1.02vw,15.5px);line-height:1.45}
+.cta-row{margin-top:clamp(26px,2.8vw,40px);display:flex;gap:14px;justify-content:flex-start;align-items:center;flex-wrap:wrap}
+.cta{display:inline-block;position:relative}
+.cta::before{content:"";position:absolute;left:10%;right:10%;bottom:-6px;height:16px;border-radius:50%;
+  background:linear-gradient(90deg,#ffcf5a,#7dffa8,#5ad7ff,#9b7bff,#ff6fd8,#ffb36b);filter:blur(9px);opacity:.85;transition:all .3s}
+.cta a{position:relative;display:inline-block;background:#111;color:#fff;font-size:13.5px;font-weight:500;padding:11px 20px;border-radius:999px;text-decoration:none;transition:transform .3s}
+.cta:hover::before{opacity:1;filter:blur(12px);bottom:-9px}
+.cta:hover a{transform:translateY(-1px)}
+.ghost{font-size:13.5px;font-weight:500;padding:10px 18px;border-radius:999px;text-decoration:none;color:#222;transition:transform .3s}
+.ghost:hover{transform:translateY(-1px)}
+.facts{position:absolute;bottom:clamp(22px,4vh,38px);left:clamp(22px,6vw,96px);right:clamp(22px,6vw,96px);display:flex;justify-content:flex-start;flex-wrap:wrap;border-top:1px solid rgba(17,17,17,.09);padding-top:14px!important;font-family:"JetBrains Mono",ui-monospace,monospace!important;font-size:11.5px!important;letter-spacing:.04em!important;text-transform:uppercase;
+  gap:clamp(22px,3.8vw,56px);padding:0 16px;z-index:3;color:#8d8d8d;font-size:clamp(13.5px,1.1vw,16px);font-weight:500;letter-spacing:-.01em}
+.facts span{display:flex;align-items:center;gap:7px}
+.facts svg{width:13px;height:13px;fill:currentColor}
+.figcap{position:absolute;z-index:3;top:clamp(96px,13vh,128px);right:clamp(22px,6vw,96px);font:500 11.5px "JetBrains Mono",ui-monospace,monospace;letter-spacing:.06em;color:#8d8d8d;display:flex;gap:10px;align-items:center}
+.figcap::before{content:"";width:7px;height:7px;border-radius:50%;background:#111;animation:blink 1.6s steps(2) infinite}
+@keyframes blink{50%{opacity:.15}}
+.hero-tag{position:absolute;z-index:3;top:clamp(96px,13vh,128px);left:clamp(22px,6vw,96px);font:500 11.5px "JetBrains Mono",ui-monospace,monospace;letter-spacing:.06em;color:#8d8d8d;text-transform:uppercase}
+
+/* ---------- sections */
+main{position:relative;z-index:1}
+section.s{width:min(1120px,92vw);margin:0 auto;padding:clamp(90px,12vh,140px) 0 0;scroll-margin-top:40px}
+.kick{font-size:12px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;color:var(--sub);margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.kick::before{content:"::>";font:500 12px "JetBrains Mono",ui-monospace,monospace;letter-spacing:0;color:#111}
+h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;letter-spacing:-.01em;line-height:1;font-size:clamp(40px,4.3vw,72px);max-width:900px}
+h2 b{font-weight:400!important}
+.lead{margin-top:18px;max-width:640px;color:var(--sub);font-size:clamp(14.5px,1.08vw,16.5px);line-height:1.55}
+.lead b{color:var(--ink);font-weight:500}
+.panel{border-radius:var(--r);padding:clamp(18px,2.2vw,28px);margin-top:34px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:38px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:38px}
+.stat{border-radius:var(--r);padding:22px 22px 20px;display:flex;flex-direction:column;min-height:220px;transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s}
+.stat:hover,.card:hover{transform:translateY(-3px)}
+.card{transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.stat .big{font-family:"Instrument Serif",Georgia,serif;font-size:clamp(40px,3.5vw,56px);font-weight:400;letter-spacing:-.01em;line-height:.95;white-space:nowrap}
+.stat .big small{font-family:Inter,system-ui,sans-serif}
+.stat .big small{font-size:.42em;color:var(--mute);letter-spacing:-.01em;margin-left:6px;font-weight:500}
+.stat p{margin-top:14px;font-size:14px;line-height:1.45;color:#2a2a2a}
+.stat .foot{margin-top:auto;padding-top:16px;font-size:12px;color:var(--sub)}
+.verdict{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.verdict.yes{background:#111;color:#fff}
+.verdict.no{border:1px solid rgba(17,17,17,.28);color:#333;background:rgba(255,255,255,.5)}
+.conclusion{margin-top:26px;font-size:clamp(16px,1.3vw,19px);line-height:1.5;letter-spacing:-.01em;max-width:860px;color:#222}
+
+/* panel header */
+.phead{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.ptitle{font-size:14px;font-weight:500}
+.ptitle em{font-style:normal;color:var(--sub);font-weight:400}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+.chip{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:#2a2a2a;padding:6px 12px 6px 10px;border-radius:999px;transition:opacity .25s}
+.chip[aria-pressed="false"]{opacity:.4}
+.chip:focus-visible{outline:2px solid #111;outline-offset:2px}
+.sw{width:10px;height:10px;border-radius:50%;flex:none}
+.sw.hollow{background:transparent!important;border:1.6px solid}
+.caption{margin-top:12px;font-size:12.5px;line-height:1.5;color:var(--sub);max-width:820px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart text{font-family:Inter,system-ui,sans-serif}
+.lit{opacity:0;transition:opacity .45s ease}
+.chart.on .lit{opacity:1}
+.mini{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.mini .glass{border-radius:999px;padding:7px 13px;font-size:12.5px}
+.mini b{font-weight:600}
+
+/* hypotheses */
+.hyp{display:grid;grid-template-columns:46px 1fr auto;gap:6px 18px;align-items:center;padding:13px 4px;border-bottom:1px solid rgba(17,17,17,.07);font-size:14px}
+.hyp:last-child{border-bottom:0}
+.hyp .id{font-weight:600}
+.hyp .est{display:block;margin-top:3px;color:var(--sub);font-size:12.5px}
+.hyp .tag{font-size:11px;color:var(--sub);margin-left:6px}
+.two{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;align-items:start}
+
+/* method cards */
+.card{border-radius:var(--r);padding:22px}
+.card h3{font-size:15px;font-weight:600;letter-spacing:-.01em;margin-bottom:12px}
+.card p,.card li{font-size:13.5px;line-height:1.55;color:#2f2f2f}
+.card ul{list-style:none;display:grid;gap:9px}
+.card li{padding-left:16px;position:relative}
+.card li::before{content:"";position:absolute;left:2px;top:.62em;width:5px;height:5px;border-radius:50%;background:#111}
+pre{margin-top:12px;font:12px/1.7 "JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word;color:#1a1a1a;
+  background:rgba(255,255,255,.55);border:1px solid rgba(17,17,17,.06);border-radius:14px;padding:14px 16px}
+.copybtn{all:unset;cursor:pointer;font-size:12px;font-weight:500;padding:6px 12px;border-radius:999px;background:#111;color:#fff}
+.note{border-radius:var(--r);padding:18px 22px;margin-top:16px;font-size:13.5px;line-height:1.55;color:#2f2f2f}
+.note b{font-weight:600}
+
+footer{position:relative;z-index:1;width:min(1120px,92vw);margin:clamp(90px,12vh,140px) auto 0;padding:26px 0 40px;
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--sub);border-top:1px solid rgba(17,17,17,.08)}
+footer a{text-decoration:none;color:#3a3a3a;margin-left:18px}
+footer a:hover{color:#000}
+
+.tip{position:fixed;z-index:50;pointer-events:none;border-radius:12px;padding:8px 11px;font-size:12.5px;line-height:1.4;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;max-width:260px}
+.tip.show{opacity:1;transform:none}
+.tip b{font-weight:600}
+
+@media (max-width:980px){.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}.two{grid-template-columns:1fr}}
+@media (max-width:760px){
+  nav{top:12px;padding:6px 6px 6px 14px;gap:10px;width:calc(100vw - 24px);justify-content:space-between}
+  .links{display:none}.brand .bt{display:none}
+  .copy{bottom:120px}
+  .figcap{top:auto;bottom:calc(100% - 92px);right:auto;left:22px}.hero-tag{display:none}
+  .facts{gap:12px 22px;font-size:13px}
+  .grid4{grid-template-columns:1fr}
+  .hyp{grid-template-columns:40px 1fr;}.hyp .verdict{grid-column:2;justify-self:start}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.lit{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="ambient" aria-hidden="true"></canvas>
+
+<nav class="glass" aria-label="Main">
+  <a class="brand" href="#top" aria-label="Neural Interface Privacy Lab">
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><g fill="#111"><circle cx="2.5" cy="9" r="1.7"/><circle cx="6.5" cy="5" r="1.7"/><circle cx="6.5" cy="13" r="1.1"/><circle cx="10.5" cy="9" r="1.7"/><circle cx="10.5" cy="2" r="1.1"/><circle cx="14.5" cy="13" r="1.7"/><circle cx="14.5" cy="5" r="1.1"/></g></svg>
+    <span class="bt">Neural Interface Privacy Lab</span>
+  </a>
+  <div class="links">
+    <a href="#findings" data-t="n1">Findings</a><a href="#scaling" data-t="n2">Scaling</a><a href="#encoders" data-t="n3">Encoders</a>
+    <a href="#sources" data-t="n4">Sources</a><a href="#heldout" data-t="n5">Held-out</a><a href="#method" data-t="n6">Method</a>
+  </div>
+  <a class="pill" href="https://github.com/am1dreaming/neural-interface-privacy-research">GitHub</a>
+</nav>
+
+<section class="hero" id="top">
+  <canvas id="dots" aria-hidden="true"></canvas>
+  <div class="hero-tag">Open audit · EEG privacy · 2026</div>
+  <div class="figcap" id="figcap" aria-hidden="true">FIG. 01 / 05 — CORTEX</div>
+  <div class="copy">
+    <h1><span data-t="h1a">EEG can’t read your words.</span><b data-t="h1b">It can read <i>you</i>.</b></h1>
+    <p data-t="hsub">An open reproducible audit with controls of non-invasive EEG-to-text on 125 people. Decoding sits at chance; identity leaks from the signal itself.</p>
+    <div class="cta-row">
+      <div class="cta"><a href="#findings" data-t="cta">Read the findings</a></div>
+      <a class="ghost glass" href="https://github.com/am1dreaming/neural-interface-privacy-research/blob/main/PREREGISTRATION.md" data-t="cta2">Pre-registration ↗</a>
+    </div>
+  </div>
+  <div class="facts" aria-label="Facts">
+    <span><svg viewBox="0 0 20 20"><path d="M1 10h3l2-6 3 12 3-9 2 3h5v2h-6l-1-2-3 9-3-12-1 3H1z"/></svg>ZuCo 2.0 · 16</span>
+    <span><svg viewBox="0 0 20 20"><path d="M1 13h3l2-4 3 6 3-10 2 8h5v2h-6l-1-4-3 10-3-6-1 2H1z"/></svg>EEGMMIDB · 109</span>
+    <span><svg viewBox="0 0 20 20"><path d="M2 2h7v7H2zm9 0h7v7h-7zM2 11h7v7H2zm9 0h7v7h-7z"/></svg><b style="font-weight:500" data-t="f3">4 encoders</b></span>
+    <span><svg viewBox="0 0 20 20"><path d="M4 1h9l4 4v14H4zm2 7v2h9V8zm0 4v2h9v-2zm0-8v2h5V4z"/></svg><b style="font-weight:500" data-t="f4">Pre-registered</b></span>
+    <span><svg viewBox="0 0 20 20"><path d="M2 17h16v2H2zM3 9h3v7H3zm5-4h3v11H8zm5 6h3v5h-3z"/></svg><b style="font-weight:500" data-t="f5">Holm-corrected</b></span>
+    <span><svg viewBox="0 0 20 20"><path d="M10 1a9 9 0 110 18 9 9 0 010-18zm0 3a6 6 0 100 12 6 6 0 000-12zm0 3a3 3 0 110 6 3 3 0 010-6z"/></svg><b style="font-weight:500" data-t="f6">22 held-out people</b></span>
+  </div>
+</section>
+
+<main>
+  <!-- 01 -->
+  <section class="s" id="findings">
+    <div class="kick" data-t="k1">01 · The short version</div>
+    <h2><span data-t="t1a">Decoding sits at chance.</span><b style="font-weight:500" data-t="t1b">Identity does not.</b></h2>
+    <div class="grid4">
+      <div class="stat glass"><div class="big">1.2%<small data-t="s1s">vs 1.3%</small></div><p data-t="s1">Sentence top-1 for new people and new sentences, against a random level of 1.3%.</p><div class="foot" data-t="s1f">ZuCo 2.0 · block split · ridge and network</div></div>
+      <div class="stat glass"><div class="big">96.5%<small data-t="s2s">vs 1.6%</small></div><p data-t="s2">Of 64 people named from band power alone, people the model never saw.</p><div class="foot" data-t="s2f">EEGMMIDB · development group</div></div>
+      <div class="stat glass"><div class="big">0.163<small data-t="s3s">vs 0.045</small></div><p data-t="s3">Attacker accuracy on 22 held-out people through a trained 32-d encoder.</p><div class="foot" data-t="s3f">evaluated once · pre-registered H1</div></div>
+      <div class="stat glass"><div class="big">≤1.1<small data-t="s4s">points</small></div><p data-t="s4">Accuracy lost when any single frequency group is removed from the features.</p><div class="foot" data-t="s4f">the fingerprint is redundant</div></div>
+    </div>
+    <p class="conclusion" data-t="concl">Training an encoder for text does not create the leak: an untrained encoder with the same start leaks as much or more. The information is already in the spectrum, so defences that act only on the embedding miss the raw signal.</p>
+  </section>
+
+  <!-- 02 -->
+  <section class="s" id="scaling">
+    <div class="kick" data-t="k2">02 · More people</div>
+    <h2><span data-t="t2a">Add people,</span><b style="font-weight:500" data-t="t2b">and the spectrum still names them.</b></h2>
+    <p class="lead" data-t="l2">Closed-set accuracy has to fall as the number of candidates grows; the question is whether it stays above <b>1/n</b>. It does, at every size, for every representation. <b>H2 confirmed in 10 of 10 tests.</b></p>
+    <div class="panel glass">
+      <div class="phead">
+        <div class="ptitle" id="scTitle"></div>
+        <div class="seg glass" role="group" aria-label="Metric"><button data-metric="acc" aria-pressed="true" data-t="mAcc">Identification</button><button data-metric="eer" aria-pressed="false" data-t="mEer">Verification EER</button></div>
+      </div>
+      <div class="legend" id="scLegend"></div>
+      <div class="chart" id="scChart"></div>
+      <p class="caption" data-t="c2">Encoder trained on 20 development people; attacker tested on people it never saw. 10 seeds, 95% CI. Seeds are not independent replicates, so intervals are a lower bound. On EEGMMIDB the encoder target is the run type, not text.</p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="s" id="encoders">
+    <div class="kick" data-t="k3">03 · Architectures</div>
+    <h2><span data-t="t3a">Four encoders,</span><b style="font-weight:500" data-t="t3b">one result.</b></h2>
+    <p class="lead" data-t="l3">All four 32-d encoders leak above chance on new ZuCo people. <b>H4 confirmed in 8 of 8 tests.</b> Accuracy overstates the open-set risk: the CNN reaches 0.79, yet its verification EER is only 0.395.</p>
+    <div class="panel glass">
+      <div class="phead"><div class="ptitle" data-t="p3">Attacker accuracy on 4 new people <em>· chance 0.25</em></div></div>
+      <div class="legend" id="enLegend"></div>
+      <div class="chart" id="enChart"></div>
+      <div class="mini" id="enMini"></div>
+      <p class="caption" data-t="c3">Trained minus untrained (same architecture and initial weights) is exploratory, not a pre-registered test. H4 was not blind: a short probe run preceded the pre-registration. The ranking is not a claim about architectures in general.</p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="s" id="sources">
+    <div class="kick" data-t="k4">04 · Where it comes from</div>
+    <h2><span data-t="t4a">No single band carries it.</span><b style="font-weight:500" data-t="t4b">All of them do.</b></h2>
+    <p class="lead" data-t="l4">Any one frequency group alone names most people; removing any one barely matters. Normalising amplitude per recording costs about 11 points, so part of the fingerprint is contact and cap fit, but most of it is the shape of the spectrum.</p>
+    <div class="panel glass">
+      <div class="phead">
+        <div class="ptitle" data-t="p4">Linear attacker, 84 people <em>· chance 0.012</em></div>
+        <div class="seg glass" role="group" aria-label="View"><button data-abl="alone" aria-pressed="true" data-t="a1">One group alone</button><button data-abl="minus" aria-pressed="false" data-t="a2">All but one</button><button data-abl="ctrl" aria-pressed="false" data-t="a3">Artefact controls</button></div>
+      </div>
+      <div class="chart" id="abChart"></div>
+      <div class="mini">
+        <span class="glass" data-t="ch1">Single channels: <b>+0.29 to +0.41</b> over chance</span>
+        <span class="glass" data-t="ch2">Strongest: <b>Iz, Oz, PO3, C4, O1</b></span>
+        <span class="glass" data-t="ch3">Weakest region: <b>frontal</b></span>
+      </div>
+      <p class="caption" data-t="c4">Exploratory, 5 seeds. At 80 Hz the “gamma” group is capped near 36 Hz, so it is upper beta, which can include muscle activity. The ablation does not separate brain from muscle or from recording conditions.</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section class="s" id="heldout">
+    <div class="kick" data-t="k5">05 · The one-shot test</div>
+    <h2><span data-t="t5a">Twenty-two people, never seen,</span><b style="font-weight:500" data-t="t5b">evaluated once.</b></h2>
+    <p class="lead" data-t="l5">Code and plan were committed before this run (<b>d6587c0</b>). The encoder trained on 84 development people; the attacker met 22 held-out people. No reruns.</p>
+    <div class="two">
+      <div class="panel glass">
+        <div class="phead"><div class="ptitle" data-t="p5a">Pre-registered tests <em>· Holm within each family</em></div></div>
+        <div id="hypList"></div>
+      </div>
+      <div class="panel glass">
+        <div class="phead"><div class="ptitle" data-t="p5b">Defences on the same people <em>· exploratory</em></div></div>
+        <div class="chart" id="dfChart"></div>
+        <p class="caption" data-t="c5">Linear attacker, chance 1/22. Privacy side only: this dataset has no text, so a defence that wipes the embedding would look best here. Its price for a decoder is untested.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section class="s" id="method">
+    <div class="kick" data-t="k6">06 · Reading it honestly</div>
+    <h2><span data-t="t6a">What this shows,</span><b style="font-weight:500" data-t="t6b">and what it does not.</b></h2>
+    <div class="grid3">
+      <div class="card glass"><h3 data-t="m1h">Threat model</h3><p data-t="m1">An attacker who holds reference recordings of a group and receives raw EEG, its spectral features, or an embedding from any encoder tested here can name the person well above chance. The strongest channel is the spectrum itself. In open-set “same person or not” for unseen people, small encoders sit near chance (EER 0.45–0.50), except the CNN on ZuCo.</p></div>
+      <div class="card glass"><h3 data-t="m2h">What did not work</h3><ul id="m2"></ul></div>
+      <div class="card glass"><h3 data-t="m3h">Limits</h3><ul id="m3"></ul></div>
+    </div>
+    <div class="note glass" data-t="timing"><b>Timing, stated plainly.</b> The pre-registration was written on 5 November 2026, before the 10-seed runs for H2, H4 and the ablation, and its hypotheses were not edited afterwards. Its first commit came after those runs, so for H2 and H4 the order rests on a local file time. Only the held-out family (H1, H3) ran provably after the commit.</div>
+    <div class="panel glass">
+      <div class="phead"><div class="ptitle" data-t="p6">Reproduce <em>· one command per experiment</em></div><button class="copybtn" id="copyBtn" data-t="copy">Copy</button></div>
+<pre id="cmds">pip install -e ".[dev,plots]" && pytest
+python data/download_eegmmidb.py
+python experiments/encoder_robustness.py --config configs/zuco2_nr.yaml --seeds 10
+python experiments/scaling_curve.py --config configs/eegmmidb.yaml --seeds 10
+python experiments/feature_ablation.py --config configs/eegmmidb.yaml --seeds 5 --probes linear --channels
+python experiments/make_plots.py
+python experiments/final_holdout.py --config configs/eegmmidb_final.yaml --seeds 10   # once, last</pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div data-t="foot">Open reproducible audit with controls · MIT · data not included · 2026</div>
+  <div>
+    <a href="https://github.com/am1dreaming/neural-interface-privacy-research">GitHub</a>
+    <a href="https://github.com/am1dreaming/neural-interface-privacy-research/blob/main/README.md">README</a>
+    <a href="https://github.com/am1dreaming/neural-interface-privacy-research/blob/main/PREREGISTRATION.md" data-t="fp">Pre-registration</a>
+    <a href="https://github.com/am1dreaming/neural-interface-privacy-research/blob/main/ETHICS.md" data-t="fe">Ethics</a>
+  </div>
+</footer>
+
+<div class="tip glass" id="tip" role="status"></div>
+
+<script>
+/* ============================================================ text */
+const T={
+en:{n1:"Findings",n2:"Scaling",n3:"Encoders",n4:"Sources",n5:"Held-out",n6:"Method",
+h1a:"EEG can’t read your words.",h1b:"It can read <i>you</i>.",
+hsub:"An open reproducible audit with controls of non-invasive EEG-to-text on 125 people. Decoding sits at chance; identity leaks from the signal itself.",
+cta:"Read the findings",cta2:"Pre-registration ↗",f3:"4 encoders",f4:"Pre-registered",f5:"Holm-corrected",f6:"22 held-out people",
+k1:"01 · The short version",t1a:"Decoding sits at chance.",t1b:"Identity does not.",
+s1s:"vs 1.3%",s1:"Sentence top-1 for new people and new sentences, against a random level of 1.3%.",s1f:"ZuCo 2.0 · block split · ridge and network",
+s2s:"vs 1.6%",s2:"Of 64 people named from band power alone, people the model never saw.",s2f:"EEGMMIDB · development group",
+s3s:"vs 0.045",s3:"Attacker accuracy on 22 held-out people through a trained 32-d encoder.",s3f:"evaluated once · pre-registered H1",
+s4s:"points",s4:"Accuracy lost when any single frequency group is removed from the features.",s4f:"the fingerprint is redundant",
+concl:"Training an encoder for text does not create the leak: an untrained encoder with the same start leaks as much or more. The information is already in the spectrum, so defences that act only on the embedding miss the raw signal.",
+k2:"02 · More people",t2a:"Add people,",t2b:"and the spectrum still names them.",
+l2:"Closed-set accuracy has to fall as the number of candidates grows; the question is whether it stays above <b>1/n</b>. It does, at every size, for every representation. <b>H2 confirmed in 10 of 10 tests.</b>",
+mAcc:"Identification",mEer:"Verification EER",
+scAcc:"Closed-set accuracy <em>· chance 1/n</em>",scEer:"Open-set EER, LDA <em>· 0.5 = chance, lower = more leakage</em>",
+c2:"Encoder trained on 20 development people; attacker tested on people it never saw. 10 seeds, 95% CI. Seeds are not independent replicates, so intervals are a lower bound. On EEGMMIDB the encoder target is the run type, not text.",
+sFeat:"Band power, all features",sPca:"Band power, PCA to 32",sUnt:"Untrained encoder",sTr:"Trained encoder",chanceN:"chance 1/n",chanceHalf:"chance 0.5",people:"people",
+k3:"03 · Architectures",t3a:"Four encoders,",t3b:"one result.",
+l3:"All four 32-d encoders leak above chance on new ZuCo people. <b>H4 confirmed in 8 of 8 tests.</b> Accuracy overstates the open-set risk: the CNN reaches 0.79, yet its verification EER is only 0.395.",
+p3:"Attacker accuracy on 4 new people <em>· chance 0.25</em>",lin:"Linear probe",mlp:"MLP probe",tmu:"trained − untrained",
+c3:"Trained minus untrained (same architecture and initial weights) is exploratory, not a pre-registered test. H4 was not blind: a short probe run preceded the pre-registration. The ranking is not a claim about architectures in general.",
+k4:"04 · Where it comes from",t4a:"No single band carries it.",t4b:"All of them do.",
+l4:"Any one frequency group alone names most people; removing any one barely matters. Normalising amplitude per recording costs about 11 points, so part of the fingerprint is contact and cap fit, but most of it is the shape of the spectrum.",
+p4:"Linear attacker, 84 people <em>· chance 0.012</em>",a1:"One group alone",a2:"All but one",a3:"Artefact controls",
+g_all:"All features",g_rms:"Amplitude (RMS)",g_delta:"Delta",g_theta:"Theta",g_alpha:"Alpha",g_beta:"Beta",g_gamma:"Gamma (≤36 Hz)",g_alpha_peak:"Individual alpha peak",
+minus:"all but ",c_norm:"Amplitude normalised",c_trim:"Edges trimmed 10%",c_both:"Normalised + trimmed",
+ch1:"Single channels: <b>+0.29 to +0.41</b> over chance",ch2:"Strongest: <b>Iz, Oz, PO3, C4, O1</b>",ch3:"Weakest region: <b>frontal</b>",
+c4:"Exploratory, 5 seeds. At 80 Hz the “gamma” group is capped near 36 Hz, so it is upper beta, which can include muscle activity. The ablation does not separate brain from muscle or from recording conditions.",
+k5:"05 · The one-shot test",t5a:"Twenty-two people, never seen,",t5b:"evaluated once.",
+l5:"Code and plan were committed before this run (<b>d6587c0</b>). The encoder trained on 84 development people; the attacker met 22 held-out people. No reruns.",
+p5a:"Pre-registered tests <em>· Holm within each family</em>",p5b:"Defences on the same people <em>· exploratory</em>",
+c5:"Linear attacker, chance 1/22. Privacy side only: this dataset has no text, so a defence that wipes the embedding would look best here. Its price for a decoder is untested.",
+yes:"Confirmed",no:"Not confirmed",dev:"development",
+h1a_:"Linear probe above chance",h1b_:"MLP probe above chance",h1c_:"Cosine EER below 0.5",h1d_:"LDA EER below 0.5",
+h3a_:"Nulling 32 identity directions lowers the linear probe",h3b_:"MLP stays above chance after nulling",h3bn:"Holm p = 0.056; not refuted either",
+h2_:"Above chance at every n, accuracy and EER",h2n:"10 / 10, EEGMMIDB",h4_:"Every encoder above chance, both probes",h4n:"8 / 8, ZuCo",
+d_none:"No defence",d_n05:"Noise, 0.5",d_n10:"Noise, 1.0",d_p4:"PCA, 4",d_p8:"PCA, 8",d_i8:"Identity-nulling, 8",d_i32:"Identity-nulling, 32",d_adv:"Adversarial, 1.0",
+chance:"chance",
+k6:"06 · Reading it honestly",t6a:"What this shows,",t6b:"and what it does not.",
+m1h:"Threat model",m1:"An attacker who holds reference recordings of a group and receives raw EEG, its spectral features, or an embedding from any encoder tested here can name the person well above chance. The strongest channel is the spectrum itself. In open-set “same person or not” for unseen people, small encoders sit near chance (EER 0.45–0.50), except the CNN on ZuCo.",
+m2h:"What did not work",m3h:"Limits",
+m2:["Decoding sentences from EEG: at chance in every setting, and deliberately not tuned further.","Adversarial training and identity subtraction against a non-linear attacker on synthetic data.","Per-person adapters: no benefit shown.","The individual alpha peak as a carrier: much weaker than band power.","Embedding size 4–64: planned as exploratory, not run."],
+m3:["One session per person: a cross-day fingerprint is untested.","4 new people per seed on ZuCo; intervals over seeds are a lower bound.","Defence costs were measured on synthetic data only.","On EEGMMIDB the encoder learns the run type, not text."],
+timing:"<b>Timing, stated plainly.</b> The pre-registration was written on 5 November 2026, before the 10-seed runs for H2, H4 and the ablation, and its hypotheses were not edited afterwards. Its first commit came after those runs, so for H2 and H4 the order rests on a local file time. Only the held-out family (H1, H3) ran provably after the commit.",
+p6:"Reproduce <em>· one command per experiment</em>",copy:"Copy",copied:"Copied",
+foot:"Open reproducible audit with controls · MIT · data not included · 2026",fp:"Pre-registration",fe:"Ethics"},
+};
+const t=k=>(T.en[k]??k);
+
+/* ============================================================ data (from results/*.json and logs) */
+const NS=[5,10,20,40,64];
+const SCALE={
+ acc:{feat:[[.982,.976,.989],[.969,.958,.981],[.973,.968,.978],[.967,.961,.972],[.965,.961,.968]],
+      pca:[[.958,.949,.966],[.931,.919,.944],[.891,.875,.907],[.833,.809,.856],[.793,.775,.811]],
+      unt:[[.448,.400,.496],[.299,.275,.323],[.212,.196,.227],[.134,.129,.139],[.104,.099,.109]],
+      tr:[[.406,.367,.444],[.259,.239,.279],[.183,.166,.200],[.115,.107,.123],[.086,.082,.091]]},
+ eer:{feat:[[.064,.050,.077],[.059,.043,.075],[.058,.050,.065],[.080,.070,.090],[.127,.118,.136]],
+      pca:[[.166,.139,.194],[.163,.148,.178],[.157,.149,.165],[.172,.159,.185],[.165,.158,.172]],
+      unt:[[.454,.443,.466],[.455,.447,.463],[.452,.448,.456],[.455,.453,.457],[.452,.450,.454]],
+      tr:[[.465,.459,.471],[.465,.460,.470],[.462,.457,.468],[.466,.462,.469],[.470,.467,.473]]}};
+const SER=[{k:"feat",lab:"sFeat",c:"#0d0d0d",hollow:false},{k:"pca",lab:"sPca",c:"#0d0d0d",hollow:true},
+           {k:"unt",lab:"sUnt",c:"#9c9c9a",hollow:false},{k:"tr",lab:"sTr",c:"#9c9c9a",hollow:true}];
+const ENC=[{n:"CNN",lin:[.794,.746,.843],mlp:[.781,.731,.831],eer:.395,d:"−0.126 [−0.160, −0.092]"},
+           {n:"EEGNet",lin:[.537,.479,.595],mlp:[.548,.494,.601],eer:.456,d:"+0.075 [+0.023, +0.127]"},
+           {n:"Transformer",lin:[.448,.422,.474],mlp:[.435,.408,.463],eer:.482,d:"−0.041 [−0.079, −0.003]"},
+           {n:"Linear",lin:[.289,.275,.302],mlp:[.292,.275,.310],eer:.500,d:"−0.031 [−0.053, −0.008]"}];
+const ABL={
+ all:[.960,.957,.964],
+ alone:[["rms",.863,.858,.868],["delta",.796,.788,.804],["theta",.832,.826,.838],["alpha",.830,.825,.836],["beta",.937,.924,.950],["gamma",.903,.894,.913],["alpha_peak",.620,.612,.627]],
+ minus:[["rms",.954,.951,.957],["delta",.956,.954,.958],["theta",.956,.952,.959],["alpha",.960,.957,.963],["beta",.950,.947,.954],["gamma",.949,.946,.953],["alpha_peak",.969,.966,.972]],
+ ctrl:[["c_norm",.854,.849,.859],["c_trim",.955,.951,.958],["c_both",.868,.862,.875]]};
+const DEF=[["d_none",.163,.148,.177],["d_n05",.092,.084,.101],["d_n10",.075,.068,.082],["d_p4",.083,.075,.090],
+           ["d_p8",.114,.100,.129],["d_i8",.105,.097,.113],["d_i32",.054,.048,.059],["d_adv",.146,.137,.154]];
+const HYP=[["H1a","h1a_","0.163 [0.148, 0.177] · 0.045",1],["H1b","h1b_","0.126 [0.114, 0.138] · 0.045",1],
+           ["H1c","h1c_","0.478 [0.471, 0.484]",1],["H1d","h1d_","0.464 [0.459, 0.469]",1],
+           ["H3a","h3a_","−0.109 [−0.121, −0.097]",1],["H3b","h3b_","0.048 [0.045, 0.051] · 0.045",0,"h3bn"],
+           ["H2","h2_","h2n",1,null,true],["H4","h4_","h4n",1,null,true]];
+
+/* ============================================================ helpers */
+const hash=(a,b)=>{const s=Math.sin(a*127.1+b*311.7)*43758.5453;return s-Math.floor(s)};
+const sm=(a,b,x)=>{const u=Math.min(1,Math.max(0,(x-a)/(b-a)));return u*u*(3-2*u)};
+const mixAt=(x,on,off,d)=>sm(on,on+d,x)*(1-sm(off,off+d,x));
+const LEVELS=[.26,.52,.78,1];
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const f3=v=>(v<0?"−":"")+Math.abs(v).toFixed(3);
+
+/* ============================================================ ASCII field */
+const RAMP=" .·:-=+*%#@";            // index = density level, 0 = empty
+const GLITCH="01<>/\\|{}[]$&?!~^";
+const INKS=["#b4b4b2","#6f6f6d","#0d0d0d"];
+const inkOf=lv=>lv<=3?0:(lv<=6?1:2);
+class Ascii{
+  constructor(cv,o){this.cv=cv;this.o=o;this.ctx=cv.getContext("2d");
+    this.fA=document.createElement("canvas");this.gA=this.fA.getContext("2d",{willReadFrequently:true});
+    this.fB=document.createElement("canvas");this.gB=this.fB.getContext("2d",{willReadFrequently:true});
+    this.resize()}
+  resize(){const r=this.cv.getBoundingClientRect();this.W=Math.max(1,r.width);this.H=Math.max(1,r.height);
+    this.DPR=Math.min(2,devicePixelRatio||1);this.cv.width=Math.round(this.W*this.DPR);this.cv.height=Math.round(this.H*this.DPR);
+    this.cw=Math.max(this.o.minCell||6.5,this.W/(this.o.div||200));this.ch=this.cw*1.72;
+    this.cols=Math.ceil(this.W/this.cw);this.rows=Math.ceil(this.H/this.ch);
+    for(const f of [this.fA,this.fB]){f.width=this.cols;f.height=this.rows}
+    this.seed=new Float32Array(this.cols*this.rows);
+    for(let j=0;j<this.rows;j++)for(let i=0;i<this.cols;i++)this.seed[j*this.cols+i]=.55*hash(i,j)+.45*hash(j*3.1,7.7);
+    this.q=this.o.quiet?this.o.quiet(this.W,this.H):null;this.atlas()}
+  atlas(){const chars=RAMP+GLITCH,pw=Math.ceil(this.cw*this.DPR),ph=Math.ceil(this.ch*this.DPR);
+    const a=document.createElement("canvas");a.width=pw*chars.length;a.height=ph*INKS.length;const g=a.getContext("2d");
+    g.font=`500 ${(this.cw*1.62*this.DPR).toFixed(1)}px "JetBrains Mono",ui-monospace,Menlo,monospace`;g.textAlign="center";g.textBaseline="middle";
+    INKS.forEach((c,r)=>{g.fillStyle=c;for(let k=0;k<chars.length;k++)g.fillText(chars[k],k*pw+pw/2,r*ph+ph*.54)});
+    this.A=a;this.pw=pw;this.ph=ph;this.ci={};[...chars].forEach((c,k)=>this.ci[c]=k)}
+  field(g,fn,tt){g.setTransform(1,0,0,1,0,0);g.fillStyle="#fff";g.fillRect(0,0,this.cols,this.rows);
+    g.setTransform(this.cols/this.W,0,0,this.rows/this.H,0,0);fn(g,tt,this.W,this.H);
+    return g.getImageData(0,0,this.cols,this.rows).data}
+  render(time){const o=this.o,{W,H,cols,rows,cw,ch,q,pw,ph,A:atl}=this,st=o.frame(time);
+    const A=this.field(this.gA,st.a,st.t),B=st.b?this.field(this.gB,st.b,st.t):null,mL=st.mL||0,mR=st.mR||0;
+    const c=this.ctx;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,this.cv.width,this.cv.height);
+    const D=this.DPR,tick=Math.floor(st.t*8),half=cols/2,gl=GLITCH.length,base=RAMP.length;
+    for(let j=0;j<rows;j++){
+      const shift=hash(j,tick)>.982?Math.round((hash(tick,j)-.5)*10):0,y=j*ch,yc=y+ch/2;
+      for(let i=0;i<cols;i++){
+        const s=this.seed[j*cols+i],m=i<half?mL:mR,useB=B&&s<m,si=Math.min(cols-1,Math.max(0,i-shift));
+        const lum=(useB?B:A)[(j*cols+si)*4]/255;let v=(1-lum-.1)/.62;if(v<=0)continue;if(v>1)v=1;
+        const x=i*cw;
+        if(o.centre){v*=sm(.03,.1,Math.abs((i+.5)/cols-.5))}
+        if(q){const dx=Math.max(q.x0-x,0,x-q.x1),dy=Math.max(q.y0-yc,0,yc-q.y1);v*=.22+.78*sm(0,q.pad,Math.hypot(dx,dy))}
+        if(v<.06)continue;
+        let k,ink;
+        const front=B&&m>.001&&m<.999&&Math.abs(s-m)<.13;
+        if(front){if(hash(i+tick,j)<.35)continue;k=base+Math.floor(hash(i*1.3,j+tick)*gl);ink=2}
+        else{
+          v*=.95+.05*Math.sin(st.t*3.1+s*40);
+          const lv=Math.max(1,Math.min(base-1,Math.round(v*(base-1))));
+          if(lv>=5&&hash(i+tick*.7,j*1.7)>.9975){k=base+Math.floor(hash(j,i+tick)*gl);ink=2}
+          else{k=lv;ink=inkOf(lv)}}
+        c.drawImage(atl,k*pw,ink*ph,pw,ph,Math.round(x*D),Math.round(y*D),pw,ph)}}}
+}
+
+/* ---- hero: one large figure on the right, over a faint live EEG background */
+function bgTraces(g,tt,W,H){g.lineCap="round";
+  for(let k=0;k<6;k++){const yk=H*(.16+k*.135),amp=H*.03;g.beginPath();
+    for(let x=0;x<=W;x+=6){const u=x/W;const Y=yk+amp*(.6*Math.sin(u*11-tt*.9*(1+k*.08)+k*1.9)+.4*Math.sin(u*29+tt*.5+k)+.5*Math.exp(-Math.pow((u-((tt*.07+k*.21)%1))*14,2))*Math.sin(u*120));x?g.lineTo(x,Y):g.moveTo(x,Y)}
+    g.lineWidth=4;g.strokeStyle="#cdcdcd";g.stroke()}}
+function place(W,H){return H>W*1.05?{cx:W*.5,cy:H*.32,S:Math.min(W*.3,H*.17)}:{cx:W*.73,cy:H*.47,S:Math.min(W*.155,H*.29)}}
+function drift(g,tt,W,H,fn){const P=place(W,H),a=tt*.35;g.save();
+  g.translate(P.cx+Math.sin(a)*W*.006,P.cy+Math.cos(a*.8)*H*.008);g.rotate(.018*Math.sin(a*.7));const s=1+.025*Math.sin(a*1.3);g.scale(s,s);
+  fn(g,P.S,tt);g.restore()}
+// deterministic meanders for the gyri
+const MEANDERS=(()=>{const out=[];let sd=7;const rnd=()=>{sd=(sd*16807)%2147483647;return sd/2147483647};
+  for(let k=0;k<34;k++){let x=-1.2+rnd()*2.4,y=-.9+rnd()*1.45,a=rnd()*6.28;const pts=[[x,y]];
+    for(let s=0;s<9;s++){a+=(rnd()-.5)*2.2;x+=Math.cos(a)*.11;y+=Math.sin(a)*.09;pts.push([x,y])}out.push(pts)}return out})();
+function brainPath(g,R){g.beginPath();g.moveTo(-1.25*R,.15*R);
+  g.bezierCurveTo(-1.36*R,-.45*R,-.95*R,-.97*R,-.3*R,-1*R);
+  g.bezierCurveTo(.38*R,-1.04*R,1.08*R,-.8*R,1.24*R,-.22*R);
+  g.bezierCurveTo(1.32*R,.12*R,1.15*R,.4*R,.9*R,.43*R);
+  g.bezierCurveTo(.74*R,.46*R,.7*R,.3*R,.55*R,.36*R);
+  g.bezierCurveTo(.62*R,.64*R,.25*R,.74*R,-.1*R,.63*R);
+  g.bezierCurveTo(-.45*R,.56*R,-.8*R,.53*R,-1.02*R,.47*R);
+  g.bezierCurveTo(-1.2*R,.42*R,-1.23*R,.3*R,-1.25*R,.15*R);g.closePath()}
+function brain(g,R,tt){g.lineCap="round";g.lineJoin="round";
+  // brain stem and cerebellum behind the cortex
+  g.fillStyle="#6f6f6f";g.beginPath();g.moveTo(-.18*R,.5*R);g.lineTo(.06*R,.5*R);g.lineTo(-.02*R,1.18*R);g.lineTo(-.24*R,1.18*R);g.closePath();g.fill();
+  g.fillStyle="#3c3c3c";g.beginPath();g.ellipse(-.72*R,.62*R,.46*R,.27*R,-.12,0,6.283);g.fill();
+  g.strokeStyle="#d8d8d8";g.lineWidth=.045*R;for(let k=-2;k<=2;k++){g.beginPath();g.ellipse(-.72*R,.62*R+k*.085*R,.4*R,.07*R,-.12,.2,2.9);g.stroke()}
+  brainPath(g,R);g.fillStyle="#4a4a4a";g.fill();
+  g.save();brainPath(g,R);g.clip();
+  const ax=Math.cos(tt*.6)*R*.7,ay=Math.sin(tt*.9)*R*.4,gr=g.createRadialGradient(ax,ay,0,ax,ay,R*.65);   // wandering activity
+  gr.addColorStop(0,"rgba(0,0,0,.8)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(-2*R,-2*R,4*R,4*R);
+  g.strokeStyle="#e8e8e8";g.lineWidth=.06*R;
+  for(const pts of MEANDERS){g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x*R,y*R):g.moveTo(x*R,y*R));g.stroke()}
+  g.strokeStyle="#fbfbfb";g.lineWidth=.1*R;
+  g.beginPath();g.moveTo(.18*R,-1*R);g.bezierCurveTo(.08*R,-.55*R,-.18*R,-.25*R,-.08*R,.22*R);g.stroke();     // central sulcus
+  g.beginPath();g.moveTo(.6*R,.3*R);g.bezierCurveTo(.25*R,.08*R,-.15*R,.0*R,-.55*R,-.12*R);g.stroke();       // lateral sulcus
+  g.restore();brainPath(g,R);g.strokeStyle="#000";g.lineWidth=.075*R;g.stroke()}
+function print(g,R,tt){const ox=.82*R,oy=1.05*R,cy=-.1*R;
+  g.save();g.beginPath();g.ellipse(0,0,ox,oy,0,0,6.283);g.clip();g.lineCap="round";g.strokeStyle="#000";g.lineWidth=.06*R;
+  // a whorl: nested, slightly irregular loops around the core, with a few ridge breaks
+  for(let k=1;k<=10;k++){const r=k*.115*R;g.beginPath();
+    for(let th=0;th<=6.3;th+=.03){const w=1+.05*Math.sin(th*2+k*.7)+.03*Math.sin(th*5-k);
+      const X=r*Math.cos(th)*.92*w,Y=cy+r*Math.sin(th)*1.22*w-(Math.sin(th)<0?r*.12:0);th?g.lineTo(X,Y):g.moveTo(X,Y)}
+    g.setLineDash([R*(1.1+hash(k,3)*1.4),R*.07]);g.lineDashOffset=k*R*.37;g.stroke()}
+  g.setLineDash([]);
+  const sy=((tt*.25)%1)*2.3*R-1.15*R,sg=g.createLinearGradient(0,sy-.07*R,0,sy+.07*R);     // scanner line
+  sg.addColorStop(0,"rgba(0,0,0,0)");sg.addColorStop(.5,"rgba(0,0,0,.45)");sg.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=sg;g.fillRect(-R,sy-.07*R,2*R,.14*R);
+  g.restore();g.beginPath();g.ellipse(0,0,ox,oy,0,0,6.283);g.strokeStyle="#000";g.lineWidth=.06*R;g.stroke()}
+function eyeAt(g,R,tt,ph,lookX,lookY){const rx=1.28*R,ry=.62*R,bl=Math.max(.06,1-Math.pow(Math.max(0,Math.sin(tt*1.05+ph)),48));
+  g.save();g.scale(1,bl);g.lineCap="round";
+  const almond=()=>{g.beginPath();g.moveTo(-rx,0);g.bezierCurveTo(-.5*rx,-ry*1.35,.5*rx,-ry*1.35,rx,0);g.bezierCurveTo(.5*rx,ry*1.3,-.5*rx,ry*1.3,-rx,0);g.closePath()};
+  g.strokeStyle="#222";g.lineWidth=.05*R;for(let k=0;k<9;k++){const u=-.75+k*.19,x0=u*rx,y0=-ry*1.0*(1-u*u*.55);g.beginPath();g.moveTo(x0,y0);g.lineTo(x0*1.12,y0-.2*R);g.stroke()}
+  almond();g.fillStyle="#f6f6f6";g.fill();g.save();almond();g.clip();
+  const lx=lookX*R,ly=lookY*R,ir=.56*R;
+  g.fillStyle="#5a5a5a";g.beginPath();g.arc(lx,ly,ir,0,6.283);g.fill();
+  g.strokeStyle="#b9b9b9";g.lineWidth=.035*R;for(let k=0;k<26;k++){const a=k/26*6.283;g.beginPath();g.moveTo(lx+Math.cos(a)*ir*.42,ly+Math.sin(a)*ir*.42);g.lineTo(lx+Math.cos(a)*ir*.95,ly+Math.sin(a)*ir*.95);g.stroke()}
+  g.fillStyle="#000";g.beginPath();g.arc(lx,ly,ir*.4,0,6.283);g.fill();
+  g.fillStyle="#fff";g.beginPath();g.arc(lx+ir*.2,ly-ir*.22,ir*.14,0,6.283);g.fill();g.restore();
+  almond();g.strokeStyle="#000";g.lineWidth=.08*R;g.stroke();g.restore()}
+// a swarm of watching eyes around the main one: [x, y, size] in units of R; they open one after another
+const SWARM=[[-2.95,-.72,.33],[-1.85,-1.0,.25],[-2.5,.02,.27],[.3,-1.1,.23],[1.55,-.96,.27],[1.75,.12,.22],
+             [1.5,1.16,.3],[.35,1.24,.24],[-.95,1.18,.27],[-1.45,-.42,.19],[2.35,-.58,.18]];
+function eye(g,R,tt){const lx=.32*Math.sin(tt*.5),ly=.06*Math.sin(tt*.8);
+  const u=EYEU;   // time since this scene started (negative while it is still fading in)
+  SWARM.forEach(([x,y,s],i)=>{const open=sm(.1+i*.2,.6+i*.2,u)*(1-sm(HOLD-.2,HOLD+.6,u));if(open<.02)return;
+    g.save();g.translate(x*R,y*R);g.scale(open,open);
+    // each small eye looks towards the main one, with its own blink phase
+    const dx=-x,dy=-y,d=Math.hypot(dx,dy)||1;eyeAt(g,R*s,tt,i*1.7,.3*dx/d,.12*dy/d);g.restore()});
+  eyeAt(g,R,tt,0,lx,ly)}
+function lock(g,R,tt){const s=.95,open=Math.max(0,Math.sin(tt*.8))*.16*R;g.save();g.scale(s,s);g.translate(0,.12*R);g.lineCap="round";
+  g.strokeStyle="#3a3a3a";g.lineWidth=.19*R;g.beginPath();g.moveTo(-.46*R,-.15*R);g.lineTo(-.46*R,-.6*R-open);g.arc(0,-.6*R-open,.46*R,Math.PI,0);g.lineTo(.46*R,-.3*R-open);g.stroke();
+  g.fillStyle="#262626";g.beginPath();g.roundRect(-.82*R,-.22*R,1.64*R,1.24*R,.16*R);g.fill();
+  g.strokeStyle="#8a8a8a";g.lineWidth=.04*R;for(let k=1;k<5;k++){g.beginPath();g.moveTo(-.7*R,-.22*R+k*.25*R);g.lineTo(.7*R,-.22*R+k*.25*R);g.stroke()}
+  g.fillStyle="#fff";g.beginPath();g.arc(0,.26*R,.13*R,0,6.283);g.fill();g.fillRect(-.05*R,.28*R,.1*R,.32*R);g.restore()}
+
+function dna(g,R,tt){const Hh=1.3*R,A=.56*R,turns=1.7,sp=tt*1.1;g.save();g.rotate(-.42);g.lineCap="round";
+  const yAt=u=>-Hh+u*2*Hh,ph=u=>u*turns*6.283+sp,X=(u,o)=>A*Math.sin(ph(u)+o),Z=(u,o)=>Math.cos(ph(u)+o);
+  const strand=(o,front)=>{for(let k=0;k<240;k++){const u0=k/240,u1=(k+1)/240,z=Z((u0+u1)/2,o);if((z>0)!==front)continue;
+      g.beginPath();g.moveTo(X(u0,o),yAt(u0));g.lineTo(X(u1,o),yAt(u1));g.lineWidth=R*(.11+.07*Math.max(0,z));g.strokeStyle=front?"#000":"#7a7a7a";g.stroke()}};
+  strand(0,false);strand(Math.PI,false);
+  for(let k=0;k<=19;k++){const u=(k+.5)/20,x1=X(u,0),x2=X(u,Math.PI),y=yAt(u),z=Z(u,0);   // base pairs
+    const mid=(x1+x2)/2;g.lineWidth=R*.07;
+    g.strokeStyle=z>0?"#3c3c3c":"#9c9c9c";g.beginPath();g.moveTo(x1,y);g.lineTo(mid,y);g.stroke();
+    g.strokeStyle=z>0?"#9c9c9c":"#3c3c3c";g.beginPath();g.moveTo(mid,y);g.lineTo(x2,y);g.stroke()}
+  strand(0,true);strand(Math.PI,true);
+  for(let k=0;k<=19;k++){const u=(k+.5)/20,y=yAt(u);for(const o of [0,Math.PI]){const z=Z(u,o);if(z>.2){g.fillStyle="#000";g.beginPath();g.arc(X(u,o),y,R*(.06+.04*z),0,6.283);g.fill()}}}
+  g.restore()}
+const FIGS=[{f:brain,n:"cortex"},{f:print,n:"fingerprint"},{f:dna,n:"genome"},{f:eye,n:"observer"},{f:lock,n:"protection"}];
+const HOLD=5.4,TRAN=1.9,SEG=HOLD+TRAN,LOOP=FIGS.length*SEG;
+let EYEU=0;
+function at(time){const u=((time%LOOP)+LOOP)%LOOP,k=Math.floor(u/SEG),r=u-k*SEG;return{k,r,n:(k+1)%FIGS.length,m:sm(HOLD,SEG,r)}}
+const capEl=document.getElementById("figcap");let capK=-1;
+function heroFrame(time){const P=at(time);
+  if(capEl&&P.k!==capK){capK=P.k;capEl.textContent=`FIG. 0${P.k+1} / 0${FIGS.length} — ${FIGS[P.k].n.toUpperCase()}`}
+  return{t:time,mL:P.m,mR:P.m,
+    a:(g,tt,W,H)=>{EYEU=P.r;bgTraces(g,tt,W,H);drift(g,tt,W,H,FIGS[P.k].f)},
+    b:(g,tt,W,H)=>{EYEU=P.r-SEG;bgTraces(g,tt,W,H);drift(g,tt,W,H,FIGS[P.n].f)}}}
+const ambientA=(g,tt,W,H)=>{g.lineCap="round";
+  for(let k=0;k<5;k++){const yk=H*(.12+k*.19),amp=H*.035;g.beginPath();
+    for(let x=0;x<=W;x+=8){const u=x/W;const Y=yk+amp*(.6*Math.sin(u*9-tt*.6*(1+k*.1)+k*1.9)+.4*Math.sin(u*23+tt*.4+k));x?g.lineTo(x,Y):g.moveTo(x,Y)}
+    g.lineWidth=14;g.strokeStyle="#c8c8c8";g.stroke();g.lineWidth=4;g.strokeStyle=k%2?"#555":"#222";g.stroke()}};
+
+const copyEl=document.querySelector(".copy");
+const hero=new Ascii(document.getElementById("dots"),{frame:heroFrame,div:205,minCell:5.5,
+  quiet:(W,H)=>{const h=document.querySelector(".hero").getBoundingClientRect(),r=copyEl.getBoundingClientRect();
+    return{x0:r.left-h.left-10,x1:r.right-h.left+10,y0:r.top-h.top-10,y1:r.bottom-h.top+10,pad:34}}});
+/* ============================================================ particle dunes (fixed, behind everything) */
+class Field{
+  constructor(cv){this.cv=cv;this.ctx=cv.getContext("2d");this.resize()}
+  resize(){this.W=innerWidth;this.H=innerHeight;this.DPR=Math.min(2,devicePixelRatio||1);
+    this.cv.width=Math.round(this.W*this.DPR);this.cv.height=Math.round(this.H*this.DPR);
+    const N=Math.round(Math.min(28000,Math.max(9000,this.W*this.H/46)));let sd=11;const rnd=()=>{sd=(sd*16807)%2147483647;return sd/2147483647};
+    const gauss=()=>{let u=0;for(let k=0;k<4;k++)u+=rnd();return (u-2)*1.7};
+    this.p=[];for(let i=0;i<N;i++){const star=rnd()<.18;
+      this.p.push({u:rnd(),v:star?0:gauss(),r:star?-1:(rnd()<.55?0:1),sp:(.004+rnd()*.012)*(rnd()<.5?1:.6),y:rnd(),tw:rnd()*6.28,s:rnd()<.12?1.6:1})}}
+  render(t){const {W,H,DPR,ctx:c}=this,sc=scrollY/Math.max(1,innerHeight),T=t*.12+sc*.9;
+    c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);c.fillStyle="#111";
+    // two ribbons that cross and twist, like dunes of sand
+    const R=[{b:.5,a1:.17,f1:1.05,w1:1,ph:0,a2:.05,f2:2.3,th:.075},{b:.58,a1:-.14,f1:.8,w1:-.8,ph:2.1,a2:.06,f2:1.7,th:.06}];
+    const buckets=[[],[],[],[]];
+    for(const q of this.p){
+      let u=(q.u+q.sp*t)%1,x=u*W*1.12-W*.06,y,al;
+      if(q.r<0){y=q.y*H;al=.16+.16*Math.sin(t*1.7+q.tw);if(al<.05)continue}
+      else{const r=R[q.r],a=6.283*u;
+        const yc=H*(r.b+r.a1*Math.sin(a*r.f1+T*r.w1+r.ph)+r.a2*Math.sin(a*r.f2-T*1.3+r.ph)+.03*Math.sin(sc*2+r.ph));
+        const th=H*r.th*(1+.75*Math.sin(a*.9+T*.7+r.ph)),crest=Math.max(0,Math.sin(a*r.f1+T*r.w1+r.ph+1.2));
+        y=yc+q.v*th;al=Math.exp(-q.v*q.v*.18)*(.25+.55*crest)*(q.v<0?1:.6)}
+      const k=al>.5?3:al>.32?2:al>.17?1:0;buckets[k].push(x,y,q.s)}
+    const A=[.14,.27,.42,.6];
+    for(let k=0;k<4;k++){c.globalAlpha=A[k];const b=buckets[k];for(let i=0;i<b.length;i+=3)c.fillRect(b[i],b[i+1],b[i+2],b[i+2])}
+    c.globalAlpha=1}
+}
+
+const amb=new Field(document.getElementById("ambient"));amb.atlas=()=>{};
+window.__render=s=>hero.render(s);
+
+let heroVis=true,t0=performance.now();
+new IntersectionObserver(e=>{heroVis=e[0].isIntersecting},{threshold:0}).observe(document.querySelector(".hero"));
+let last=0;
+function loop(now){const s=(now-t0)/1000;if(heroVis&&!window.__pause)hero.render(s);
+  if(now-last>33){amb.render(s);last=now}requestAnimationFrame(loop)}
+if(REDUCED){hero.render(2);amb.render(0)}else requestAnimationFrame(loop);
+
+/* ============================================================ charts (SVG, LED dots) */
+const NS_SVG="http://www.w3.org/2000/svg";
+const el=(tag,at={},parent)=>{const e=document.createElementNS(NS_SVG,tag);for(const k in at)e.setAttribute(k,at[k]);if(parent)parent.appendChild(e);return e};
+function svgIn(box,W,H){box.innerHTML="";const s=el("svg",{viewBox:`0 0 ${W} ${H}`,height:H,role:"img"});box.appendChild(s);return s}
+const txt=(s,x,y,str,at={})=>{const e=el("text",Object.assign({x,y,"font-size":11.5,fill:"#8a8a8a"},at),s);e.textContent=str;return e};
+function quantR(frac,R){if(frac<.13)return 0;for(let k=LEVELS.length-1;k>=0;k--)if(frac>=LEVELS[k]-.13)return k?R*LEVELS[k]:R*.38;return 0}
+
+/* tooltip */
+const tip=document.getElementById("tip");
+document.addEventListener("pointermove",e=>{const h=e.target.closest&&e.target.closest("[data-tip]");
+  if(!h){tip.classList.remove("show");return}tip.innerHTML=h.getAttribute("data-tip");tip.classList.add("show");
+  const w=tip.offsetWidth,x=Math.min(innerWidth-w-10,e.clientX+14),y=e.clientY-tip.offsetHeight-12;tip.style.left=x+"px";tip.style.top=(y<8?e.clientY+18:y)+"px"});
+document.addEventListener("scroll",()=>tip.classList.remove("show"),{passive:true});
+
+/* vertical grouped LED bars */
+function barsV(box,{groups,series,ymax,chance,chanceLab}){
+  const W=box.clientWidth,H=Math.round(Math.max(250,Math.min(340,W*.46))),m={l:38,r:10,t:16,b:34},pw=W-m.l-m.r,ph=H-m.t-m.b;
+  const s=svgIn(box,W,H),Y=v=>m.t+ph*(1-v/ymax),P=6,R=2.35;
+  for(let v=0;v<=ymax+1e-9;v+=.2){el("line",{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),stroke:"#111","stroke-opacity":.06},s);txt(s,m.l-8,Y(v)+4,v.toFixed(1),{"text-anchor":"end"})}
+  const gw=pw/groups.length,ns=series.length,bw=Math.max(2,Math.floor(Math.min(60,gw*.74/ns-6)/P))*P,rowsN=Math.floor(ph/P);
+  groups.forEach((g,gi)=>{const tot=ns*bw+(ns-1)*8,x00=m.l+gw*gi+gw/2-tot/2;
+    series.forEach((se,si)=>{const [mv,lo,hi]=g.vals[si],x0=x00+si*(bw+8),cols=bw/P,lit=mv/ymax*ph/P,full=Math.floor(lit),fr=lit-full;
+      const grp=el("g",{},s);
+      for(let r=0;r<rowsN;r++){const cy=m.t+ph-(r+.5)*P;for(let c=0;c<cols;c++){const cx=x0+(c+.5)*P;
+        el("circle",{cx,cy,r:1.05,fill:"#111","fill-opacity":.08},grp);
+        let rr=r<full?R:(r===full?quantR(fr,R):0);
+        if(rr)el("circle",{cx,cy,r:rr,fill:se.c,class:"lit",style:`transition-delay:${r*9+gi*50+si*25}ms`},grp)}}
+      const xc=x0+bw/2;el("line",{x1:xc,x2:xc,y1:Y(hi),y2:Y(lo),stroke:"#111","stroke-width":1.3},s);
+      for(const v of [lo,hi])el("line",{x1:xc-4,x2:xc+4,y1:Y(v),y2:Y(v),stroke:"#111","stroke-width":1.3},s);
+      el("rect",{x:x0-3,y:m.t,width:bw+6,height:ph,fill:"transparent","data-tip":`<b>${g.label}</b> · ${t(se.lab)}<br>${mv.toFixed(3)} [${lo.toFixed(3)}, ${hi.toFixed(3)}]`},s)});
+    txt(s,m.l+gw*gi+gw/2,H-10,g.label,{"text-anchor":"middle",fill:"#2a2a2a","font-size":12.5})});
+  el("line",{x1:m.l,x2:W-m.r,y1:Y(chance),y2:Y(chance),stroke:"#111","stroke-dasharray":"4 4","stroke-opacity":.7},s);
+  txt(s,m.l+6,Y(chance)-6,chanceLab,{fill:"#555"})}
+
+/* horizontal LED bars */
+function barsH(box,{rows,xmax,chance,chanceLab,ref,refLab}){
+  const W=box.clientWidth,narrow=W<560,labW=narrow?Math.min(150,W*.42):Math.min(230,W*.3),valW=narrow?0:150,rowH=narrow?40:32,P=6,R=2.3;
+  const H=rows.length*rowH+30,s=svgIn(box,W,H),x0=labW+8,track=W-x0-valW-8,X=v=>x0+track*v/xmax,n=Math.floor(track/P);
+  rows.forEach((r,ri)=>{const yc=ri*rowH+rowH/2+4,lit=r.m/xmax*n,full=Math.floor(lit),fr=lit-full,g=el("g",{},s);
+    txt(s,labW,yc+4,r.label,{"text-anchor":"end",fill:r.strong?"#111":"#2a2a2a","font-size":12.5,"font-weight":r.strong?600:400});
+    for(const dy of [-3.1,3.1])for(let i=0;i<n;i++){const cx=x0+(i+.5)*P,cy=yc+dy;el("circle",{cx,cy,r:1,fill:"#111","fill-opacity":.08},g);
+      const rr=i<full?R:(i===full?quantR(fr,R):0);if(rr)el("circle",{cx,cy,r:rr,fill:r.c||"#0d0d0d",class:"lit",style:`transition-delay:${i*4+ri*30}ms`},g)}
+    el("line",{x1:X(r.lo),x2:X(r.hi),y1:yc,y2:yc,stroke:"#fff","stroke-width":3.2},s);
+    el("line",{x1:X(r.lo),x2:X(r.hi),y1:yc,y2:yc,stroke:"#111","stroke-width":1.2},s);
+    for(const v of [r.lo,r.hi])el("line",{x1:X(v),x2:X(v),y1:yc-5,y2:yc+5,stroke:"#111","stroke-width":1.2},s);
+    const lbl=`${r.m.toFixed(3)} [${r.lo.toFixed(3)}, ${r.hi.toFixed(3)}]`;
+    if(valW)txt(s,W,yc+4,lbl,{"text-anchor":"end",fill:"#2a2a2a","font-size":12});
+    el("rect",{x:0,y:yc-rowH/2,width:W,height:rowH,fill:"transparent","data-tip":`<b>${r.label}</b><br>${lbl}`},s)});
+  const yb=rows.length*rowH+8;
+  if(chance!=null){el("line",{x1:X(chance),x2:X(chance),y1:2,y2:yb,stroke:"#111","stroke-dasharray":"3 4","stroke-opacity":.75},s);txt(s,X(chance)+5,yb+14,chanceLab,{fill:"#555"})}
+  if(ref!=null){el("line",{x1:X(ref),x2:X(ref),y1:2,y2:yb,stroke:"#111","stroke-dasharray":"1 3","stroke-opacity":.5},s);txt(s,X(ref),yb+14,refLab,{"text-anchor":"end",fill:"#555"})}}
+
+/* scaling: dotted lines, halftone CI bands */
+let METRIC="acc";const ON={feat:1,pca:1,unt:1,tr:1};
+function scaling(){
+  const box=document.getElementById("scChart"),W=box.clientWidth,H=Math.round(Math.max(280,Math.min(400,W*.5)));
+  const m={l:40,r:16,t:14,b:34},pw=W-m.l-m.r,ph=H-m.t-m.b,s=svgIn(box,W,H),ymax=METRIC==="acc"?1:.6;
+  const lx=Math.log(5),rx=Math.log(64),X=n=>m.l+pw*(Math.log(n)-lx)/(rx-lx),Y=v=>m.t+ph*(1-v/ymax);
+  const defs=el("defs",{},s);
+  for(const [id,c] of [["htk","#0d0d0d"],["htg","#8f8f8d"]]){const p=el("pattern",{id:"sc"+id,width:4,height:4,patternUnits:"userSpaceOnUse"},defs);el("circle",{cx:2,cy:2,r:.85,fill:c,"fill-opacity":.45},p)}
+  for(let v=0;v<=ymax+1e-9;v+=.2){el("line",{x1:m.l,x2:W-m.r,y1:Y(v),y2:Y(v),stroke:"#111","stroke-opacity":.06},s);txt(s,m.l-8,Y(v)+4,v.toFixed(1),{"text-anchor":"end"})}
+  NS.forEach(n=>{el("line",{x1:X(n),x2:X(n),y1:m.t,y2:m.t+ph,stroke:"#111","stroke-opacity":.04},s);txt(s,X(n),H-12,String(n),{"text-anchor":"middle",fill:"#2a2a2a","font-size":12.5})});
+  txt(s,X(50),H-12,t("people"),{"text-anchor":"middle"});
+  // chance
+  if(METRIC==="acc"){let d="";for(let n=5;n<=64;n*=1.03)d+=(d?"L":"M")+X(n).toFixed(1)+","+Y(1/n).toFixed(1);
+    el("path",{d,fill:"none",stroke:"#111","stroke-dasharray":"4 4","stroke-opacity":.7},s);txt(s,X(64)-4,Y(1/64)-8,t("chanceN"),{"text-anchor":"end",fill:"#555"})}
+  else{el("line",{x1:m.l,x2:W-m.r,y1:Y(.5),y2:Y(.5),stroke:"#111","stroke-dasharray":"4 4","stroke-opacity":.7},s);txt(s,W-m.r,Y(.5)-7,t("chanceHalf"),{"text-anchor":"end",fill:"#555"})}
+  let delay=0;
+  SER.forEach(se=>{if(!ON[se.k])return;const d=SCALE[METRIC][se.k],dark=se.c==="#0d0d0d";
+    const top=NS.map((n,i)=>X(n)+","+Y(d[i][2])),bot=NS.map((n,i)=>X(n)+","+Y(d[i][1])).reverse();
+    el("polygon",{points:top.concat(bot).join(" "),fill:`url(#sc${dark?"htk":"htg"})`},s);
+    const g=el("g",{},s);
+    for(let i=0;i<NS.length-1;i++){const x1=X(NS[i]),y1=Y(d[i][0]),x2=X(NS[i+1]),y2=Y(d[i+1][0]),L=Math.hypot(x2-x1,y2-y1),k=Math.max(1,Math.round(L/5));
+      for(let q=1;q<k;q++){const u=q/k;el("circle",{cx:x1+(x2-x1)*u,cy:y1+(y2-y1)*u,r:se.hollow?1.15:1.55,fill:se.c,class:"lit",style:`transition-delay:${delay+i*120+q*6}ms`},g)}}
+    NS.forEach((n,i)=>{const [mv,lo,hi]=d[i];
+      el("circle",{cx:X(n),cy:Y(mv),r:4.3,fill:se.hollow?"#f7f7f5":se.c,stroke:se.c,"stroke-width":1.7,class:"lit",style:`transition-delay:${delay+i*120}ms`},g);
+      el("circle",{cx:X(n),cy:Y(mv),r:12,fill:"transparent","data-tip":`<b>${t(se.lab)}</b> · n = ${n}<br>${mv.toFixed(3)} [${lo.toFixed(3)}, ${hi.toFixed(3)}]`+(METRIC==="acc"?`<br>${t("chance")} ${(1/n).toFixed(3)}`:"")},s)});
+    delay+=140});
+  document.getElementById("scTitle").innerHTML=t(METRIC==="acc"?"scAcc":"scEer")}
+
+function legend(id,items,toggle){const L=document.getElementById(id);L.innerHTML="";
+  items.forEach(it=>{const b=document.createElement(toggle?"button":"span");b.className="chip glass";
+    if(toggle){b.setAttribute("aria-pressed",ON[it.k]?"true":"false");b.onclick=()=>{ON[it.k]=ON[it.k]?0:1;b.setAttribute("aria-pressed",ON[it.k]?"true":"false");scaling();reveal()}}
+    b.innerHTML=`<i class="sw${it.hollow?" hollow":""}" style="background:${it.c};border-color:${it.c}"></i>${t(it.lab)}`;L.appendChild(b)})}
+
+let ABV="alone";
+function drawAll(){
+  legend("scLegend",SER,true);scaling();
+  const enS=[{lab:"lin",c:"#0d0d0d"},{lab:"mlp",c:"#9c9c9a"}];legend("enLegend",enS,false);
+  barsV(document.getElementById("enChart"),{groups:ENC.map(e=>({label:e.n,vals:[e.lin,e.mlp]})),series:enS,ymax:1,chance:.25,chanceLab:t("chance")+" 0.25"});
+  document.getElementById("enMini").innerHTML=ENC.map(e=>`<span class="glass">${e.n} · ${t("tmu")} <b>${e.d}</b> · EER ${e.eer.toFixed(3)}</span>`).join("");
+  const ab=ABL[ABV].map(([k,m,lo,hi])=>({label:(ABV==="minus"?t("minus"):"")+(k.startsWith("c_")?t(k):t("g_"+k)),m,lo,hi}));
+  ab.unshift({label:t("g_all"),m:ABL.all[0],lo:ABL.all[1],hi:ABL.all[2],strong:true});
+  barsH(document.getElementById("abChart"),{rows:ab,xmax:1,chance:1/84,chanceLab:t("chance")+" 0.012",ref:ABL.all[0],refLab:t("g_all")});
+  barsH(document.getElementById("dfChart"),{rows:DEF.map(([k,m,lo,hi],i)=>({label:t(k),m,lo,hi,strong:i===0})),xmax:.2,chance:1/22,chanceLab:t("chance")+" 0.045"});
+  document.getElementById("hypList").innerHTML=HYP.map(([id,k,est,ok,note,dev])=>`<div class="hyp"><span class="id">${id}</span>
+    <span>${t(k)}${dev?`<span class="tag">· ${t("dev")}</span>`:""}<span class="est">${dev?t(est):est}${note?` · ${t(note)}`:""}</span></span><span class="verdict ${ok?"yes":"no"}">${t(ok?"yes":"no")}</span></div>`).join("");
+  document.getElementById("m2").innerHTML=t("m2").map(x=>`<li>${x}</li>`).join("");
+  document.getElementById("m3").innerHTML=t("m3").map(x=>`<li>${x}</li>`).join("");
+  reveal()}
+
+/* reveal on scroll */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("on");e.target.dataset.seen=1}}),{threshold:.25});
+function reveal(){document.querySelectorAll(".chart").forEach(c=>{if(REDUCED||c.dataset.seen){requestAnimationFrame(()=>c.classList.add("on"))}else io.observe(c)})}
+
+/* text */
+function applyText(){document.querySelectorAll("[data-t]").forEach(n=>{const v=t(n.dataset.t);if(typeof v==="string")n.innerHTML=v});
+  drawAll();hero.q=hero.o.quiet(hero.W,hero.H);if(REDUCED)hero.render(2)}
+document.querySelectorAll("[data-metric]").forEach(b=>b.onclick=()=>{METRIC=b.dataset.metric;
+  document.querySelectorAll("[data-metric]").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));scaling();reveal()});
+document.querySelectorAll("[data-abl]").forEach(b=>b.onclick=()=>{ABV=b.dataset.abl;
+  document.querySelectorAll("[data-abl]").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));drawAll()});
+document.getElementById("copyBtn").onclick=async e=>{const b=e.currentTarget;
+  try{await navigator.clipboard.writeText(document.getElementById("cmds").textContent);b.textContent=t("copied");setTimeout(()=>b.textContent=t("copy"),1400)}catch(err){
+    const r=document.createRange();r.selectNodeContents(document.getElementById("cmds"));const sel=getSelection();sel.removeAllRanges();sel.addRange(r)}};
+
+/* current section in nav */
+const navLinks=[...document.querySelectorAll(".links a")];
+const navObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)navLinks.forEach(a=>a.classList.toggle("cur",a.getAttribute("href")==="#"+e.target.id))}),{rootMargin:"-45% 0px -50% 0px"});
+document.querySelectorAll("section.s").forEach(sec=>navObs.observe(sec));
+
+/* resize and start */
+let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{hero.resize();amb.resize();drawAll();if(REDUCED){hero.render(2);amb.render(0)}},150)});
+applyText();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{hero.q=hero.o.quiet(hero.W,hero.H);hero.atlas();amb.atlas();drawAll()});
+</script>
+</body>
+</html>
